@@ -1,0 +1,21 @@
+{
+  "name": "Rei da Várzea",
+  "short_name": "Rei da Várzea",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#FD070D",
+  "description": "O seu app definitivo para organizar o futebol de várzea.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

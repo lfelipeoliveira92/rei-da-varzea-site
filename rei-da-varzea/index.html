@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rei da Várzea</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#FFD700"/>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/images/icons/icon-192.png">
+
+    <style>
+        /* SEU CSS PERFEITO VEM AQUI */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        :root { --cor-amarelo: #FFD700; --cor-amarelo-hover: #E6C200; --cor-azul: #0057B7; --cor-fundo: #000000; --cor-fundo-container: #1A1A1A; --cor-texto: #FFFFFF; --cor-texto-secundario: #BDBDBD; --cor-input-fundo: #333333; --cor-input-borda: #444444; --cor-confirmado: #28a745; --cor-rejeitado: #dc3545;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { width: 100%; max-width: 450px; }
+        .form-container { background-color: var(--cor-fundo-container); padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* ANOTAÇÃO: Estilo para a sua logo */
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-img { max-width: 250px; height: auto; }
+
+        h2, .section-title { text-align: center; margin-bottom: 20px; font-weight: 400; color: var(--cor-texto-secundario); }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.9em; color: var(--cor-texto-secundario); }
+        .input-group input, .input-group select { width: 100%; padding: 12px; background-color: var(--cor-input-fundo); border: 1px solid var(--cor-input-borda); border-radius: 6px; color: var(--cor-texto); font-size: 1em; }
+        .btn { padding: 12px; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: 700; border: none; transition: all 0.2s ease-in-out; }
+        .btn:disabled { background-color: #555 !important; color: #888 !important; cursor: not-allowed !important; }
+        .btn-profile { flex-grow: 1; background-color: var(--cor-input-fundo); border: 1px solid var(--cor-input-borda); color: var(--cor-texto); }
+        .btn-profile.selected { background-color: var(--cor-amarelo); border-color: var(--cor-amarelo); color: var(--cor-fundo); }
+        .profile-selection { display: flex; gap: 15px; margin-bottom: 30px; }
+        .btn-submit { width: 100%; padding: 15px; background-color: var(--cor-amarelo); color: var(--cor-fundo); font-size: 1.1em; }
+        .btn-secondary { background-color:transparent; border: 1px solid var(--cor-azul); color: var(--cor-azul); width: 100%; margin-top: 10px;}
+        .login-link { text-align: center; margin-top: 20px; font-size: 0.9em; }
+        a { color: var(--cor-azul); text-decoration: none; }
+        .game-card { background-color: var(--cor-input-fundo); border-left: 5px solid var(--cor-amarelo); padding: 20px; border-radius: 6px; margin-bottom: 20px; }
+        .game-card.confirmed { border-left-color: var(--cor-confirmado); }
+        .game-card.rejected { border-left-color: var(--cor-rejeitado); }
+        .confirmation-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-confirm { background-color: var(--cor-confirmado); color: white; flex-grow: 1; }
+        .btn-reject { background-color: var(--cor-rejeitado); color: white; flex-grow: 1; }
+        .dimmed { opacity: 0.4; }
+        .attendance-list { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--cor-input-borda); }
+        .attendance-list h4 { color: var(--cor-amarelo); }
+        .modal-overlay, .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .vote-card { background-color: var(--cor-fundo-container); padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; border-top: 5px solid var(--cor-amarelo); }
+        .player-vote-list { list-style: none; padding: 0; margin: 20px 0; max-height: 200px; overflow-y: auto; }
+        .player-vote-list li button { width: 100%; text-align: left; margin-bottom: 10px; }
+        .btn-skip-vote { background: none; border: none; color: var(--cor-texto-secundario); text-decoration: underline; width: 100%; margin-top: 15px; }
+        .mvp-notification { background: linear-gradient(45deg, var(--cor-amarelo), #ffec80); color: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; }
+        .goal-registration-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .goal-registration-item label { flex-grow: 1; }
+        .goal-registration-item input { width: 80px; text-align: center; padding: 12px; background-color: #555; border: 1px solid #666; border-radius: 6px; color: var(--cor-texto); font-size: 1.1em;}
+        .score-input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0; }
+        .score-input-container input { width: 70px; text-align: center; font-size: 1.2em; }
+        .winner-selection .input-group { margin-bottom: 10px; text-align: left; }
+        .winner-selection .input-group label { display: flex; align-items: center; }
+        .winner-selection .input-group input { width: auto; margin-right: 10px; }
+        .player-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .player-list-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--cor-input-fundo); padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; }
+        .player-info span { display: block; }
+        .player-info .position { font-size: 0.8em; color: var(--cor-amarelo); font-weight: bold; }
+        .invite-box { background-color: var(--cor-input-fundo); border: 1px dashed var(--cor-input-borda); padding: 15px; text-align: center; border-radius: 6px; margin: 20px 0; }
+        .invite-code { font-size: 1.5em; font-weight: 700; color: var(--cor-amarelo); letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <main class="container" id="main-container">
+        <div class="form-container" style="text-align: center;">
+            <div class="logo-container"><img src="/logo.png" alt="Logo Rei da Várzea" class="logo-img"></div>
+            <p>Carregando...</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, writeBatch, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // COLE A CONFIGURAÇÃO DO SEU PROJETO FIREBASE AQUI
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const mainContainer = document.getElementById('main-container');
+        let state = { currentUser: null, userData: null, team: null, players: [], games: [], confirmations: {}, votes: {}, goals: {}, unsubscribe: () => {} };
+        let selectedProfile = null;
+
+        function render(screen, data = {}) { mainContainer.innerHTML = screen(data); attachEventListeners(); }
+
+        onAuthStateChanged(auth, user => {
+            if (typeof state.unsubscribe === 'function') state.unsubscribe();
+            if (user) {
+                state.currentUser = user;
+                listenToUserData(user.uid);
+            } else {
+                state = { currentUser: null, userData: null, team: null, players: [], games: [], confirmations: {}, votes: {}, goals: {}, unsubscribe: () => {} };
+                render(screenLogin);
+            }
+        });
+
+        function listenToUserData(userId) {
+            const userDocRef = doc(db, "users", userId);
+            state.unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    state.userData = { id: docSnap.id, ...docSnap.data() };
+                    if (state.userData.teamId) {
+                        listenToTeamData(state.userData.teamId);
+                    } else {
+                        if (state.userData.profile === 'dono') render(screenDonoCreateTeam);
+                        else render(screenJogadorJoinTeam);
+                    }
+                } else {
+                    render(screenCadastro);
+                }
+            });
+        }
+
+        function listenToTeamData(teamId) {
+            const unsubscribers = [];
+            unsubscribers.push(onSnapshot(doc(db, "teams", teamId), docSnap => {
+                state.team = docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+                if (state.userData?.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard);
+            }));
+            unsubscribers.push(onSnapshot(query(collection(db, "users"), where("teamId", "==", teamId)), snapshot => {
+                state.players = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (state.userData?.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard);
+            }));
+            unsubscribers.push(onSnapshot(query(collection(db, "games"), where("teamId", "==", teamId)), snapshot => {
+                state.games = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                state.games.forEach(game => listenToGameSubcollections(game.id));
+                if (state.userData?.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard);
+            }));
+            state.unsubscribe = () => unsubscribers.forEach(unsub => unsub());
+        }
+
+        function listenToGameSubcollections(gameId) {
+            onSnapshot(collection(db, `games/${gameId}/confirmations`), snap => { state.confirmations[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (state.userData?.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); });
+            onSnapshot(collection(db, `games/${gameId}/votes`), snap => { state.votes[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (state.userData?.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); });
+            onSnapshot(collection(db, `games/${gameId}/goals`), snap => { state.goals[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (state.userData?.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); });
+        }
+
+        async function handleLogin(e) { e.preventDefault(); try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { alert('Utilizador ou senha inválidos!'); } }
+        async function handleLogout() { await signOut(auth); }
+        async function handleCadastroSubmit(e) { e.preventDefault(); const email = document.getElementById('email').value; const password = document.getElementById('password').value; const name = document.getElementById('nome').value; if (!name || !email || !password || !selectedProfile) return alert("Preencha todos os campos e selecione um perfil."); try { const userCredential = await createUserWithEmailAndPassword(auth, email, password); await setDoc(doc(db, "users", userCredential.user.uid), { name, nickname: document.getElementById('apelido').value, email, profile: selectedProfile, position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, teamId: null, createdAt: serverTimestamp() }); } catch (error) { alert("Erro ao criar conta: " + error.message); } }
+        async function handleDonoSubmit(e) { e.preventDefault(); const teamName = document.getElementById('nome-time').value; if (!teamName) return alert('Digite o nome do time.'); const teamCode = `${teamName.substring(0, 4).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`; const newTeamRef = await addDoc(collection(db, "teams"), { name: teamName, ownerId: state.currentUser.uid, code: teamCode, createdAt: serverTimestamp() }); await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: newTeamRef.id }); }
+        async function handleJogadorSubmit(e) { e.preventDefault(); const code = document.getElementById('codigo-time').value.toUpperCase(); const q = query(collection(db, "teams"), where("code", "==", code)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: querySnapshot.docs[0].id }); } else { alert("Código de convite inválido!"); } }
+        async function handleAgendarJogo(e) { e.preventDefault(); await addDoc(collection(db, "games"), { teamId: state.userData.teamId, opponent: document.getElementById('opponent').value, location: document.getElementById('location').value, dateTime: new Date(`${document.getElementById('game-date').value}T${document.getElementById('game-time').value}`).toISOString(), votingOpen: false, resultsEntered: false, createdAt: serverTimestamp() }); }
+        async function handleConfirmation(gameId, status) { const confirmationRef = doc(db, `games/${gameId}/confirmations`, state.currentUser.uid); const docSnap = await getDoc(confirmationRef); if (docSnap.exists() && docSnap.data().status === status) { await deleteDoc(confirmationRef); } else { await setDoc(confirmationRef, { userId: state.currentUser.uid, status }); } }
+        async function handleGameResultSubmit(e, game) { e.preventDefault(); const winnerRadio = document.querySelector('input[name="winner"]:checked'); if (!winnerRadio) return alert("Por favor, selecione o resultado da partida."); const winner = winnerRadio.value; const scoreHome = parseInt(document.getElementById('score-home').value) || 0; const scoreAway = parseInt(document.getElementById('score-away').value) || 0; if ((winner === 'home' && scoreHome <= scoreAway) || (winner === 'away' && scoreHome >= scoreAway) || (winner === 'draw' && scoreHome !== scoreAway)) return alert('Resultado inconsistente com o placar!'); await updateDoc(doc(db, "games", game.id), { result: { winner, score: { home: scoreHome, away: scoreAway } } }); render(screenRegistrarGols, { game }); }
+        async function handleGoalSubmit(e, game) { e.preventDefault(); const inputs = e.target.querySelectorAll('input[type="number"]'); let totalGoals = 0; const batch = writeBatch(db); inputs.forEach(input => { const quantity = parseInt(input.value) || 0; if (quantity > 0) { totalGoals += quantity; const goalRef = doc(db, `games/${game.id}/goals`, input.dataset.playerId); batch.set(goalRef, { playerId: input.dataset.playerId, quantity }); } }); if (game.result.score.home !== totalGoals) return alert(`O número de gols registados (${totalGoals}) não bate com o placar do seu time (${game.result.score.home})!`); await batch.commit(); await updateDoc(doc(db, "games", game.id), { resultsEntered: true, votingOpen: true }); render(screenVotacaoCraque, { game }); }
+        async function handleSkipGoals(game) { if (confirm("Tem certeza?")) { await updateDoc(doc(db, "games", game.id), { resultsEntered: true, votingOpen: true }); render(screenVotacaoCraque, { game }); } }
+        async function handleVoteSubmit(game, votedPlayerId) { await setDoc(doc(db, `games/${game.id}/votes`, state.currentUser.uid), { voterId: state.currentUser.uid, votedPlayerId }); }
+        async function handleSkipVote(game) { await setDoc(doc(db, `games/${game.id}/votes`, state.currentUser.uid), { voterId: state.currentUser.uid, votedPlayerId: null }); }
+        function handleRegisterResults(gameId) { const game = state.games.find(g => g.id === gameId); render(screenRegisterResult, { game }); }
+
+        const logoHTML = `<div class="logo-container"><img src="/logo.png" alt="Logo Rei da Várzea" class="logo-img"></div>`;
+        const screenLogin = () => `<div class="form-container">${logoHTML}<h2>Login</h2><form id="login-form"><div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div><button type="submit" class="btn btn-submit">Entrar</button></form><p class="login-link">Não tem conta? <a id="show-register-btn" href="#">Cadastre-se</a></p></div>`;
+        const screenCadastro = () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${logoHTML}<h2>Crie sua Conta</h2><form id="cadastro-form"><div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div><div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div><div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">CRIAR CONTA</button></form><p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p></div>`;};
+        const screenDonoCreateTeam = () => `<div class="form-container">${logoHTML}<h2>Crie seu time</h2><form id="dono-form"><div class="input-group"><label for="nome-time">Nome do seu time</label><input type="text" id="nome-time" required></div><button type="submit" class="btn btn-submit">Criar e Avançar</button></form></div>`;
+        const screenJogadorJoinTeam = () => `<div class="form-container">${logoHTML}<h2>Entre para um Time</h2><form id="jogador-form"><div class="input-group"><label for="codigo-time">Código de Convite</label><input type="text" id="codigo-time" required></div><button type="submit" class="btn btn-submit">Entrar no Time</button></form></div>`;
+        const screenAgendarJogo = () => `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Agendar Jogo</h2><form id="agendar-jogo-form"><div class="input-group"><label>Adversário</label><input type="text" id="opponent" required></div><div class="input-group"><label>Local</label><input type="text" id="location" required></div><div class="input-group"><label>Data</label><input type="date" id="game-date" required></div><div class="input-group"><label>Hora</label><input type="time" id="game-time" required></div><button type="submit" class="btn btn-submit">Confirmar e Convocar</button></form></div>`;
+        const screenDonoDashboard = () => { if (!state.team || !state.userData) return `<div class="form-container">${logoHTML}<p>Carregando dados do time...</p></div>`; const teamPlayers = state.players.filter(p => p.profile === 'jogador'); const hasPendingGame = state.games.some(g => !g.resultsEntered); const agendarBtn = teamPlayers.length >= 2 && !hasPendingGame ? `<button id="agendar-jogo-btn" class="btn btn-submit">+ Agendar Novo Jogo</button>` : `<button class="btn btn-submit" disabled>+ Agendar Novo Jogo</button>`; let gamesHTML = state.games.sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).map(game => { let gameActionsHTML = ''; const confirmations = state.confirmations[game.id] || []; const votes = state.votes[game.id] || []; const goals = state.goals[game.id] || []; if (!game.resultsEntered) { const teamPlayerIds = teamPlayers.map(p => p.id); const responses = confirmations.filter(c => teamPlayerIds.includes(c.userId)); const allPlayersResponded = responses.length >= teamPlayers.length; const ownerConfirmation = confirmations.find(c => c.userId === state.currentUser.uid); let ownerConfirmBtnClass = '', ownerRejectBtnClass = ''; if (ownerConfirmation) { ownerRejectBtnClass = ownerConfirmation.status === 'confirmed' ? 'dimmed' : ''; ownerConfirmBtnClass = ownerConfirmation.status === 'rejected' ? 'dimmed' : ''; } const ownerConfirmationHTML = `<div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${ownerConfirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${ownerRejectBtnClass}">❌ TÔ FORA</button></div>`; const registerButtonHTML = `<button class="btn btn-secondary register-results-btn" data-game-id="${game.id}" ${!allPlayersResponded ? 'disabled' : ''} title="${!allPlayersResponded ? 'Aguardando resposta de todos os jogadores' : 'Registrar resultado do jogo'}">🏁 Registrar Resultados</button>`; const confirmed = confirmations.filter(c=>c.status === 'confirmed').map(c=>state.players.find(p=>p.id===c.userId)).filter(Boolean); const rejected = confirmations.filter(c=>c.status === 'rejected').map(c=>state.players.find(p=>p.id===c.userId)).filter(Boolean); const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div>`; gameActionsHTML = ownerConfirmationHTML + registerButtonHTML + attendanceHTML; } else { const { result } = game; const scoreText = (result.score.home !== undefined && result.score.away !== undefined) ? `(${result.score.home}x${result.score.away})` : ''; const winnerText = result.winner === 'draw' ? 'Empate' : `${result.winner === 'home' ? state.team.name : game.opponent} venceu`; const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length; let craquesText = 'Votação em andamento...'; if (votes.length >= eligibleVotersCount && eligibleVotersCount > 0) { const voteCounts = votes.filter(v => v.votedPlayerId).reduce((acc, vote) => { acc[vote.votedPlayerId] = (acc[vote.votedPlayerId] || 0) + 1; return acc; }, {}); const maxVotes = Math.max(0, ...Object.values(voteCounts)); const craques = maxVotes > 0 ? Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes).map(id => state.players.find(p=>p.id==id)?.name) : []; craquesText = craques.length > 0 ? craques.join(', ') : 'N/A'; } const artilheiros = goals.map(g => { const player = state.players.find(u => u.id === g.playerId); return `${player?.name || '...'} (${g.quantity} gols)`; }); gameActionsHTML = `<div class="attendance-list"><h4>Resultado: ${winnerText} ${scoreText}</h4><h4>🏆 Craque(s): ${craquesText}</h4><h4>⚽ Artilharia: ${artilheiros.length > 0 ? artilheiros.join(', ') : 'Sem gols'}</h4></div>`; } return `<div class="game-card" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p>${gameActionsHTML}</div>`; }).join(''); return `<div class="form-container"><h3 style="text-align:center; margin-bottom: 15px;">Dashboard: ${state.team.name}</h3><p class="login-link">Logado como: ${state.userData.email} (<a id="logout-btn" href="#">Sair</a>)</p><hr style="border-color:#333;margin:15px 0;">${agendarBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${state.team.code}</span></div><h2 class="section-title" style="margin-top:30px;">Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;};
+        const screenJogadorDashboard = () => { if (!state.team || !state.userData) return `<div class="form-container">${logoHTML}<p>Carregando dados do time...</p></div>`; let gamesHTML = state.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).map(game => { const confirmations = state.confirmations[game.id] || []; const myC = confirmations.find(c => c.userId === state.currentUser.uid); let cardClass = '', confirmBtnClass = '', rejectBtnClass = ''; if (myC) { cardClass = myC.status === 'confirmed' ? 'confirmed' : 'rejected'; rejectBtnClass = myC.status === 'confirmed' ? 'dimmed' : ''; confirmBtnClass = myC.status === 'rejected' ? 'dimmed' : ''; } return `<div class="game-card ${cardClass}" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>📍 ${game.location}</p><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${confirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${rejectBtnClass}">❌ TÔ FORA</button></div></div>`; }).join(''); let votePopupHTML = ''; const pendingVoteGame = state.games.find(g => { const confirmations = state.confirmations[g.id] || []; const votes = state.votes[g.id] || []; const myConfirmation = confirmations.find(c => c.userId === state.currentUser.uid); const myVote = votes.find(v => v.voterId === state.currentUser.uid); return g.votingOpen && myConfirmation?.status === 'confirmed' && !myVote; }); if (pendingVoteGame) { votePopupHTML = `<div class="popup-overlay"><div class="vote-card"><h4>Votação aberta!</h4><p>A votação para o Craque do Time do jogo contra <strong>${pendingVoteGame.opponent}</strong> está aberta!</p><button id="go-to-vote-btn" class="btn btn-submit" data-game-id="${pendingVoteGame.id}" style="margin-top: 20px;">Votar Agora!</button></div></div>`; } return `${votePopupHTML}<div class="form-container"><h3 style="text-align:center; margin-bottom: 15px;">${state.team.name}</h3><p class="login-link">Logado como: ${state.userData.email} (<a id="logout-btn" href="#">Sair</a>)</p><hr style="border-color: #333; margin: 20px 0;"><button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Próximos Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;};
+        const screenElenco = () => { let membersHTML = state.players.map(member => `<li class="player-list-item"><div class="player-info"><span>${member.name}</span><span class="position">${member.position || '👑 Dono'}</span></div></li>`).join(''); return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Elenco: ${state.team.name}</h2><ul class="player-list">${membersHTML}</ul><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;};
+        const screenVotacaoCraque = ({ game }) => { const confirmations = state.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => state.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.filter(p => p.id !== state.currentUser.uid).map(p => `<li><button type="button" class="btn btn-profile player-vote-btn" data-player-id="${p.id}">${p.name}</button></li>`).join(''); return `<div class="modal-overlay"><div class="vote-card"><h4>Votação Aberta!</h4><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><p>Escolha o <strong>Craque do Time</strong>:</p><ul class="player-vote-list">${playersHTML}</ul><button id="confirm-vote-btn" class="btn btn-submit" data-game-id="${game.id}" disabled>Confirmar Voto</button><button id="skip-vote-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular Votação</button></div></div>`; };
+        const screenRegisterResult = ({ game }) => `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Resultado Final</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="result-form" data-game-id="${game.id}"><div class="winner-selection"><h3 class="section-title">Quem venceu?</h3><div class="input-group"><label><input type="radio" name="winner" value="home" required> Nosso time</label></div><div class="input-group"><label><input type="radio" name="winner" value="away"> O Adversário</label></div><div class="input-group"><label><input type="radio" name="winner" value="draw"> Empate</label></div></div><h3 class="section-title">Placar (Opcional)</h3><div class="score-input-container"><span>Nosso Time</span><input type="number" id="score-home" min="0" value="0"><span>X</span><input type="number" id="score-away" min="0" value="0"><span>Adversário</span></div><button type="submit" class="btn btn-submit">Salvar e ir para Artilharia</button></form></div>`;
+        const screenRegistrarGols = ({ game }) => { const confirmations = state.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => state.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.map(p => `<div class="goal-registration-item"><label for="player-${p.id}">${p.name} (${p.position || '👑 Dono'})</label><input type="number" class="goal-input" data-player-id="${p.id}" min="0" value="0"></div>`).join(''); return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Artilharia da Partida</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="goal-form" data-game-id="${game.id}">${playersHTML}<button type="submit" class="btn btn-submit" style="margin-top:20px;">Salvar Artilharia</button></form><button id="skip-goals-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular e Encerrar</button></div>`;};
+        const screenHistorico = () => { let gamesHTML = state.games.sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).filter(g => g.resultsEntered).map(game => { const { result } = game; const confirmations = state.confirmations[game.id] || []; const votes = state.votes[game.id] || []; const goals = state.goals[game.id] || []; const scoreText = (result.score.home !== undefined && result.score.away !== undefined) ? `(${result.score.home}x${result.score.away})` : ''; const winnerText = result.winner === 'draw' ? 'Empate' : `${result.winner === 'home' ? state.team.name : game.opponent} venceu`; const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length; let craquesText = 'Votação em andamento...'; if (votes.length >= eligibleVotersCount && eligibleVotersCount > 0) { const voteCounts = votes.filter(v => v.votedPlayerId).reduce((acc, vote) => { acc[vote.votedPlayerId] = (acc[vote.votedPlayerId] || 0) + 1; return acc; }, {}); const maxVotes = Math.max(0, ...Object.values(voteCounts)); const craques = maxVotes > 0 ? Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes).map(id => state.players.find(p=>p.id==id)?.name) : []; craquesText = craques.length > 0 ? craques.join(', ') : 'N/A'; } const artilheiros = goals.map(g => { const player = state.players.find(u => u.id === g.playerId); return `${player?.name || '...'} (${g.quantity} gols)`; }); return `<div class="game-card"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="attendance-list"><p><strong>Resultado: ${winnerText} ${scoreText}</strong></p><p><strong>🏆 Craque(s):</strong> ${craquesText}</p><p><strong>⚽ Artilharia:</strong> ${artilheiros.join(', ') || 'Sem gols'}</p></div></div>`;}).join(''); return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Histórico de Jogos</h2>${gamesHTML || '<p>Nenhum jogo no histórico.</p>'}<button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;}
+
+        function attachEventListeners() {
+            document.getElementById('show-register-btn')?.addEventListener('click', () => render(screenCadastro));
+            document.getElementById('show-login-btn')?.addEventListener('click', () => render(screenLogin));
+            document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+            const cadastroForm = document.getElementById('cadastro-form'); if (cadastroForm) { const b = cadastroForm.querySelectorAll('.btn-profile'); const p = document.getElementById('position-field'); const s = p.querySelector('select'); b.forEach(B => { B.addEventListener('click', function() { b.forEach(n => n.classList.remove('selected')); this.classList.add('selected'); selectedProfile = this.dataset.profile; if(selectedProfile === 'jogador'){ p.style.display = 'block'; s.required = true; } else { p.style.display = 'none'; s.required = false; } }); }); cadastroForm.addEventListener('submit', handleCadastroSubmit); }
+            document.getElementById('dono-form')?.addEventListener('submit', handleDonoSubmit);
+            document.getElementById('jogador-form')?.addEventListener('submit', handleJogadorSubmit);
+            document.getElementById('agendar-jogo-btn')?.addEventListener('click', () => render(screenAgendarJogo));
+            document.getElementById('agendar-jogo-form')?.addEventListener('submit', handleAgendarJogo);
+            document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+            document.querySelectorAll('.confirmation-buttons').forEach(div => { const gameId = div.dataset.gameId; if (!gameId) return; div.querySelector('.btn-confirm')?.addEventListener('click', () => handleConfirmation(gameId, 'confirmed')); div.querySelector('.btn-reject')?.addEventListener('click', () => handleConfirmation(gameId, 'rejected')); });
+            document.querySelectorAll('.register-results-btn').forEach(b => b.addEventListener('click', function() { handleRegisterResults(this.dataset.gameId); }));
+            const resultForm = document.getElementById('result-form'); if(resultForm) { resultForm.addEventListener('submit', (e) => handleGameResultSubmit(e, state.games.find(g=>g.id === resultForm.dataset.gameId)));}
+            const goalForm = document.getElementById('goal-form'); if(goalForm) { const game = state.games.find(g=>g.id === goalForm.dataset.gameId); goalForm.addEventListener('submit', (e) => handleGoalSubmit(e, game)); document.getElementById('skip-goals-btn').addEventListener('click', () => handleSkipGoals(game)); }
+            document.getElementById('ver-elenco-btn')?.addEventListener('click', () => render(screenElenco));
+            document.getElementById('ver-historico-btn')?.addEventListener('click', () => render(screenHistorico));
+            document.getElementById('voltar-dashboard-btn')?.addEventListener('click', () => { if (state.userData.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); });
+            const confirmVoteBtn = document.getElementById('confirm-vote-btn'); if(confirmVoteBtn) { let selectedPlayerId = null; document.querySelectorAll('.player-vote-btn').forEach(button => { button.addEventListener('click', function() { document.querySelectorAll('.player-vote-btn').forEach(btn => btn.classList.remove('selected')); this.classList.add('selected'); selectedPlayerId = this.dataset.playerId; confirmVoteBtn.disabled = false; }); }); const game = state.games.find(g=>g.id === confirmVoteBtn.dataset.gameId); if(game) { confirmVoteBtn.addEventListener('click', () => handleVoteSubmit(game, selectedPlayerId)); document.getElementById('skip-vote-btn').addEventListener('click', () => handleSkipVote(game)); } }
+            document.getElementById('go-to-vote-btn')?.addEventListener('click', function() { const game = state.games.find(g => g.id === this.dataset.gameId); if (game) render(screenVotacaoCraque, { game }); });
+        }
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => console.log('Service Worker registrado com sucesso.'))
+                    .catch(error => console.log('Falha ao registrar Service Worker:', error));
+            });
+        }
+    </script>
+</body>
+</html>
