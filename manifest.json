@@ -8,12 +8,12 @@
   "description": "O seu app definitivo para organizar o futebol de várzea.",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://i.imgur.com/VErPYOl.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://i.imgur.com/xdidfQa.png",
       "sizes": "512x512",
       "type": "image/png"
     }
