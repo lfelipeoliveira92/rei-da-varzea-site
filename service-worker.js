@@ -1,5 +1,5 @@
 // Define um nome e versão para o cache do seu aplicativo.
-const CACHE_NAME = 'rei-da-varzea-v1';
+const CACHE_NAME = 'rei-da-varzea-v2';
 
 // Lista de todos os arquivos que o seu aplicativo precisa para funcionar offline.
 // Os links dos ícones foram CORRIGIDOS para apontar para os links do Imgur.
