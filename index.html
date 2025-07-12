@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="https://i.imgur.com/VErPYOl.png">
 
     <style>
-        /* SEU CSS PERFEITO VEM AQUI */
+        /* SEU CSS PERFEITO VEM AQUI (NÃO HOUVE MUDANÇAS) */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         :root { --cor-amarelo: #FFD700; --cor-amarelo-hover: #E6C200; --cor-azul: #0057B7; --cor-fundo: #000000; --cor-fundo-container: #1A1A1A; --cor-texto: #FFFFFF; --cor-texto-secundario: #BDBDBD; --cor-input-fundo: #333333; --cor-input-borda: #444444; --cor-confirmado: #28a745; --cor-rejeitado: #dc3545;}
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -74,8 +74,9 @@
     </main>
 
     <script type="module">
+        // --- MUDANÇA 1: ADICIONADO "GoogleAuthProvider" e "signInWithPopup" ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, writeBatch, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // CONFIGURAÇÃO REAL DO FIREBASE
@@ -129,14 +130,20 @@
             state.unsubscribe = onSnapshot(userDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     state.userData = { id: docSnap.id, ...docSnap.data() };
-                    if (state.userData.teamId) {
+                    // --- MUDANÇA: VERIFICA SE O PERFIL FOI ESCOLHIDO ---
+                    if (!state.userData.profile) {
+                        render(screenChooseProfile); // Se não tem perfil, manda para a tela de escolha
+                    } else if (state.userData.teamId) {
                         listenToTeamData(state.userData.teamId);
                     } else {
                         if (state.userData.profile === 'dono') render(screenDonoCreateTeam);
                         else render(screenJogadorJoinTeam);
                     }
                 } else {
-                    render(screenCadastro);
+                    // Usuário autenticado pelo Google, mas sem registro no banco de dados.
+                    // Isso pode acontecer se ele se logou pelo Google pela primeira vez.
+                    // O handleGoogleSignIn já trata a criação inicial, então aqui podemos direcionar para a escolha de perfil.
+                    render(screenChooseProfile);
                 }
             });
         }
@@ -167,7 +174,87 @@
 
         async function handleLogin(e) { e.preventDefault(); try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { alert('Utilizador ou senha inválidos!'); } }
         async function handleLogout() { await signOut(auth); }
-        async function handleCadastroSubmit(e) { e.preventDefault(); const email = document.getElementById('email').value; const password = document.getElementById('password').value; const name = document.getElementById('nome').value; if (!name || !email || !password || !selectedProfile) return alert("Preencha todos os campos e selecione um perfil."); try { const userCredential = await createUserWithEmailAndPassword(auth, email, password); await setDoc(doc(db, "users", userCredential.user.uid), { name, nickname: document.getElementById('apelido').value, email, profile: selectedProfile, position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, teamId: null, createdAt: serverTimestamp() }); } catch (error) { alert("Erro ao criar conta: " + error.message); } }
+        
+        // --- MUDANÇA 2: LÓGICA DE CADASTRO ATUALIZADA ---
+        async function handleCadastroSubmit(e) { 
+            e.preventDefault(); 
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            // Pega o valor do novo campo
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const name = document.getElementById('nome').value;
+            
+            if (!name || !email || !password || !selectedProfile) return alert("Preencha todos os campos e selecione um perfil."); 
+            
+            // Adiciona a verificação das senhas
+            if (password !== confirmPassword) {
+                return alert("Erro: As senhas não conferem!");
+            }
+
+            try { 
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password); 
+                await setDoc(doc(db, "users", userCredential.user.uid), { 
+                    name, 
+                    nickname: document.getElementById('apelido').value, 
+                    email, 
+                    profile: selectedProfile, 
+                    position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, 
+                    teamId: null, 
+                    createdAt: serverTimestamp() 
+                }); 
+            } catch (error) { 
+                alert("Erro ao criar conta: " + error.message); 
+            } 
+        }
+
+        // --- NOVO: FUNÇÃO PARA LOGIN COM GOOGLE ---
+        async function handleGoogleSignIn() {
+            const provider = new GoogleAuthProvider();
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                // Verifica se o usuário já existe no nosso banco de dados
+                const userDocRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(userDocRef);
+
+                if (!docSnap.exists()) {
+                    // Se não existe, é um novo usuário. Criamos um registro básico.
+                    // O `profile` fica nulo para que a tela de escolha apareça.
+                    await setDoc(userDocRef, {
+                        name: user.displayName,
+                        email: user.email,
+                        profile: null, // Perfil será definido no próximo passo
+                        teamId: null,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                // Se o usuário já existe, o onAuthStateChanged cuidará de tudo.
+            } catch (error) {
+                console.error("Erro no login com Google: ", error);
+                alert("Não foi possível fazer login com o Google. Tente novamente.");
+            }
+        }
+
+        // --- NOVO: FUNÇÃO PARA QUANDO O USUÁRIO ESCOLHE O PERFIL ---
+        async function handleProfileSelection(e) {
+            e.preventDefault();
+            if (!selectedProfile) return alert("Por favor, selecione um perfil.");
+
+            const dataToUpdate = {
+                profile: selectedProfile,
+                position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null,
+            };
+
+            try {
+                await updateDoc(doc(db, "users", state.currentUser.uid), dataToUpdate);
+                // A atualização vai disparar o onSnapshot e renderizar a tela correta.
+            } catch(error) {
+                console.error("Erro ao salvar perfil: ", error);
+                alert("Ocorreu um erro ao salvar seu perfil.");
+            }
+        }
+
         async function handleDonoSubmit(e) { e.preventDefault(); const teamName = document.getElementById('nome-time').value; if (!teamName) return alert('Digite o nome do time.'); const teamCode = `${teamName.substring(0, 4).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`; const newTeamRef = await addDoc(collection(db, "teams"), { name: teamName, ownerId: state.currentUser.uid, code: teamCode, createdAt: serverTimestamp() }); await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: newTeamRef.id }); }
         async function handleJogadorSubmit(e) { e.preventDefault(); const code = document.getElementById('codigo-time').value.toUpperCase(); const q = query(collection(db, "teams"), where("code", "==", code)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: querySnapshot.docs[0].id }); } else { alert("Código de convite inválido!"); } }
         async function handleAgendarJogo(e) { e.preventDefault(); await addDoc(collection(db, "games"), { teamId: state.userData.teamId, opponent: document.getElementById('opponent').value, location: document.getElementById('location').value, dateTime: new Date(`${document.getElementById('game-date').value}T${document.getElementById('game-time').value}`).toISOString(), votingOpen: false, resultsEntered: false, createdAt: serverTimestamp() }); }
@@ -180,8 +267,48 @@
         function handleRegisterResults(gameId) { const game = state.games.find(g => g.id === gameId); render(screenRegisterResult, { game }); }
 
         const logoHTML = '<div class="logo-container"><img src="https://i.imgur.com/tWfGLm6.png" alt="Logo Rei da Várzea" class="logo-img"></div>';
-        const screenLogin = () => `<div class="form-container">${logoHTML}<h2>Login</h2><form id="login-form"><div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div><button type="submit" class="btn btn-submit">Entrar</button><button type="button" id="install-button" class="btn btn-secondary" style="display: ${deferredPrompt ? 'block' : 'none'};">Instalar Aplicativo</button></form><p class="login-link">Não tem conta? <a id="show-register-btn" href="#">Cadastre-se</a></p></div>`;
-        const screenCadastro = () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${logoHTML}<h2>Crie sua Conta</h2><form id="cadastro-form"><div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div><div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div><div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">CRIAR CONTA</button></form><p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p></div>`;};
+        
+        // --- NOVO: BOTÃO DO GOOGLE REUTILIZÁVEL ---
+        const googleButtonHTML = `<div class="login-link" style="margin-bottom: 20px; font-size: 0.9em; color: var(--cor-texto-secundario);">ou</div><button type="button" id="google-signin-btn" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 10px;"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;">Continuar com Google</button>`;
+        
+        // --- MUDANÇA: TELA DE LOGIN COM BOTÃO GOOGLE ---
+        const screenLogin = () => `<div class="form-container">${logoHTML}<h2>Login</h2><form id="login-form"><div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div><button type="submit" class="btn btn-submit">Entrar</button></form>${googleButtonHTML}<p class="login-link">Não tem conta? <a id="show-register-btn" href="#">Cadastre-se</a></p><button type="button" id="install-button" class="btn btn-secondary" style="display: ${deferredPrompt ? 'block' : 'none'};">Instalar Aplicativo</button></div>`;
+        
+        // --- MUDANÇA 3: TELA DE CADASTRO ATUALIZADA ---
+        const screenCadastro = () => { 
+            const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; 
+            return `<div class="form-container">${logoHTML}<h2>Crie sua Conta</h2>
+                <form id="cadastro-form">
+                    <div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div>
+                    <div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div>
+                    <div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div>
+                    <div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div>
+                    
+                    <div class="input-group"><label for="confirm-password">Confirme sua senha</label><input type="password" id="confirm-password" required></div>
+
+                    <p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p>
+                    <div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div>
+                    <div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div>
+                    <button type="submit" class="btn btn-submit">CRIAR CONTA</button>
+                </form>
+                ${googleButtonHTML}
+                <p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p>
+                </div>`;
+        };
+
+        // --- NOVO: TELA PARA ESCOLHER O PERFIL (PARA USUÁRIOS DO GOOGLE) ---
+        const screenChooseProfile = () => {
+            const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`;
+            return `<div class="form-container">${logoHTML}<h2>Complete seu Cadastro</h2>
+                <p style="text-align: center; margin-bottom: 20px;">Bem-vindo(a), ${state.currentUser?.displayName || 'jogador(a)'}! Falta só mais um passo.</p>
+                <form id="profile-selection-form">
+                    <p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Qual seu perfil no time?</p>
+                    <div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div>
+                    <div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div>
+                    <button type="submit" class="btn btn-submit">Salvar e Continuar</button>
+                </form></div>`;
+        };
+
         const screenDonoCreateTeam = () => `<div class="form-container">${logoHTML}<h2>Crie seu time</h2><form id="dono-form"><div class="input-group"><label for="nome-time">Nome do seu time</label><input type="text" id="nome-time" required></div><button type="submit" class="btn btn-submit">Criar e Avançar</button></form></div>`;
         const screenJogadorJoinTeam = () => `<div class="form-container">${logoHTML}<h2>Entre para um Time</h2><form id="jogador-form"><div class="input-group"><label for="codigo-time">Código de Convite</label><input type="text" id="codigo-time" required></div><button type="submit" class="btn btn-submit">Entrar no Time</button></form></div>`;
         const screenAgendarJogo = () => `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Agendar Jogo</h2><form id="agendar-jogo-form"><div class="input-group"><label>Adversário</label><input type="text" id="opponent" required></div><div class="input-group"><label>Local</label><input type="text" id="location" required></div><div class="input-group"><label>Data</label><input type="date" id="game-date" required></div><div class="input-group"><label>Hora</label><input type="time" id="game-time" required></div><button type="submit" class="btn btn-submit">Confirmar e Convocar</button></form></div>`;
@@ -200,9 +327,30 @@
                 installButton.addEventListener('click', handleInstallClick);
             }
 
+            // --- MUDANÇA: ADICIONADO LISTENER PARA O GOOGLE E PARA A ESCOLHA DE PERFIL ---
+            document.getElementById('google-signin-btn')?.addEventListener('click', handleGoogleSignIn);
+
             document.getElementById('show-register-btn')?.addEventListener('click', () => render(screenCadastro));
             document.getElementById('show-login-btn')?.addEventListener('click', () => render(screenLogin));
             document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+            
+            const profileSelectionForm = document.getElementById('profile-selection-form');
+            if(profileSelectionForm) {
+                const b = profileSelectionForm.querySelectorAll('.btn-profile'); 
+                const p = document.getElementById('position-field'); 
+                const s = p.querySelector('select');
+                b.forEach(B => { 
+                    B.addEventListener('click', function() { 
+                        b.forEach(n => n.classList.remove('selected')); 
+                        this.classList.add('selected'); 
+                        selectedProfile = this.dataset.profile; 
+                        if(selectedProfile === 'jogador'){ p.style.display = 'block'; s.required = true; } 
+                        else { p.style.display = 'none'; s.required = false; }
+                    });
+                });
+                profileSelectionForm.addEventListener('submit', handleProfileSelection);
+            }
+
             const cadastroForm = document.getElementById('cadastro-form'); if (cadastroForm) { const b = cadastroForm.querySelectorAll('.btn-profile'); const p = document.getElementById('position-field'); const s = p.querySelector('select'); b.forEach(B => { B.addEventListener('click', function() { b.forEach(n => n.classList.remove('selected')); this.classList.add('selected'); selectedProfile = this.dataset.profile; if(selectedProfile === 'jogador'){ p.style.display = 'block'; s.required = true; } else { p.style.display = 'none'; s.required = false; } }); }); cadastroForm.addEventListener('submit', handleCadastroSubmit); }
             document.getElementById('dono-form')?.addEventListener('submit', handleDonoSubmit);
             document.getElementById('jogador-form')?.addEventListener('submit', handleJogadorSubmit);
