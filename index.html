@@ -5,23 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rei da Várzea</title>
     
+    <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#FFD700"/>
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/VErPYOl.png">
+    <link rel="apple-touch-icon" href="/images/icons/icon-192.png">
 
     <style>
-        /* CSS ATUALIZADO */
+        /* CSS Completo com as novas classes */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         :root { --cor-amarelo: #FFD700; --cor-amarelo-hover: #E6C200; --cor-azul: #0057B7; --cor-fundo: #000000; --cor-fundo-container: #1A1A1A; --cor-texto: #FFFFFF; --cor-texto-secundario: #BDBDBD; --cor-input-fundo: #333333; --cor-input-borda: #444444; --cor-confirmado: #28a745; --cor-rejeitado: #dc3545;}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .container { width: 100%; max-width: 450px; }
-        .form-container { background-color: var(--cor-fundo-container); padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .form-container { position: relative; background-color: var(--cor-fundo-container); padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
         .logo-container { text-align: center; margin-bottom: 20px; }
         .logo-img { max-width: 250px; height: auto; }
+
         h2, .section-title { text-align: center; margin-bottom: 20px; font-weight: 400; color: var(--cor-texto-secundario); }
-        .input-group { margin-bottom: 20px; position: relative; } /* Adicionado position relative */
-        .input-group label { display: block; margin-bottom: 8px; font-size: 0.9em; color: var(--cor-texto-secundario); }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.9em; color: var(--cor-texto-secundario); }
         .input-group input, .input-group select { width: 100%; padding: 12px; background-color: var(--cor-input-fundo); border: 1px solid var(--cor-input-borda); border-radius: 6px; color: var(--cor-texto); font-size: 1em; }
         .btn { padding: 12px; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: 700; border: none; transition: all 0.2s ease-in-out; }
         .btn:disabled { background-color: #555 !important; color: #888 !important; cursor: not-allowed !important; }
@@ -30,12 +33,12 @@
         .profile-selection { display: flex; gap: 15px; margin-bottom: 30px; }
         .btn-submit { width: 100%; padding: 15px; background-color: var(--cor-amarelo); color: var(--cor-fundo); font-size: 1.1em; }
         .btn-secondary { background-color:transparent; border: 1px solid var(--cor-azul); color: var(--cor-azul); width: 100%; margin-top: 10px;}
+        
+        .btn-install { width: 100%; margin-top: 10px; background-color: var(--cor-amarelo); color: var(--cor-fundo); }
+        .btn-install:hover { background-color: var(--cor-amarelo-hover); }
+
         .login-link { text-align: center; margin-top: 20px; font-size: 0.9em; }
         a { color: var(--cor-azul); text-decoration: none; }
-        
-        /* --- NOVO CSS --- */
-        .forgot-password-link { display: block; text-align: right; font-size: 0.8em; margin-top: -10px; margin-bottom: 20px; }
-        
         .game-card { background-color: var(--cor-input-fundo); border-left: 5px solid var(--cor-amarelo); padding: 20px; border-radius: 6px; margin-bottom: 20px; }
         .game-card.confirmed { border-left-color: var(--cor-confirmado); }
         .game-card.rejected { border-left-color: var(--cor-rejeitado); }
@@ -46,11 +49,22 @@
         .attendance-list { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--cor-input-borda); }
         .attendance-list h4 { color: var(--cor-amarelo); }
         .modal-overlay, .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        .vote-card { background-color: var(--cor-fundo-container); padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; border-top: 5px solid var(--cor-amarelo); }
+        .vote-card, .edit-modal-card, .confirm-modal-card, .help-modal-card { background-color: var(--cor-fundo-container); padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; border-top: 5px solid var(--cor-amarelo); }
+        .confirm-modal-card { border-top-color: var(--cor-rejeitado); }
+        .help-modal-card { border-top-color: var(--cor-azul); }
+        .help-modal-card ul { list-style-position: inside; padding-left: 10px; }
+        .help-modal-card li { margin-bottom: 10px; }
         .player-vote-list { list-style: none; padding: 0; margin: 20px 0; max-height: 200px; overflow-y: auto; }
         .player-vote-list li button { width: 100%; text-align: left; margin-bottom: 10px; }
         .btn-skip-vote { background: none; border: none; color: var(--cor-texto-secundario); text-decoration: underline; width: 100%; margin-top: 15px; }
-        .mvp-notification { background: linear-gradient(45deg, var(--cor-amarelo), #ffec80); color: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; }
+        
+        .dashboard-notification-area { margin-bottom: 20px; }
+        .dashboard-notification { position: relative; background: linear-gradient(45deg, var(--cor-azul), #003366); color: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; font-size: 0.9em; }
+        .dashboard-notification.mvp { background: linear-gradient(45deg, var(--cor-amarelo), #ffec80); color: #333; }
+        .dashboard-notification p { margin: 0 0 5px 0; font-weight: bold; }
+        .dashboard-notification strong { font-weight: 700; }
+        .notification-close-btn { position: absolute; top: 5px; right: 8px; background: none; border: none; color: inherit; font-size: 1.2em; cursor: pointer; opacity: 0.7; }
+
         .goal-registration-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
         .goal-registration-item label { flex-grow: 1; }
         .goal-registration-item input { width: 80px; text-align: center; padding: 12px; background-color: #555; border: 1px solid #666; border-radius: 6px; color: var(--cor-texto); font-size: 1.1em;}
@@ -63,8 +77,28 @@
         .player-list-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--cor-input-fundo); padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; }
         .player-info span { display: block; }
         .player-info .position { font-size: 0.8em; color: var(--cor-amarelo); font-weight: bold; }
-        .invite-box { background-color: var(--cor-input-fundo); border: 1px dashed var(--cor-input-borda); padding: 15px; text-align: center; border-radius: 6px; margin: 20px 0; }
+        
+        .invite-box { background-color: var(--cor-input-fundo); border: 1px dashed var(--cor-input-borda); padding: 20px; text-align: center; border-radius: 6px; margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .invite-code { font-size: 1.5em; font-weight: 700; color: var(--cor-amarelo); letter-spacing: 2px; }
+        
+        .share-button { display: flex; align-items: center; gap: 8px; background-color: var(--cor-amarelo); color: var(--cor-fundo); padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.9em; transition: background-color 0.2s; }
+        .share-button:hover { background-color: var(--cor-amarelo-hover); }
+
+        .dashboard-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .team-logo { width: 50px; height: 50px; background-color: var(--cor-amarelo); color: var(--cor-fundo); display: flex; justify-content: center; align-items: center; border-radius: 8px; font-size: 1.8em; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+        .team-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .team-info { flex-grow: 1; }
+        .team-name-container, .welcome-message { display: flex; align-items: center; gap: 8px; }
+        .team-name { font-size: 1.5em; font-weight: 700; color: var(--cor-texto); }
+        .welcome-message { font-size: 0.9em; color: var(--cor-texto-secundario); }
+        .edit-icon { cursor: pointer; opacity: 0.6; transition: opacity 0.2s; color: var(--cor-texto-secundario); }
+        .edit-icon:hover { opacity: 1; }
+        .help-icon { cursor: pointer; color: var(--cor-azul); }
+        .logout-icon { position: absolute; top: 15px; right: 15px; cursor: pointer; color: var(--cor-azul); }
+        .logout-icon:hover { opacity: 0.8; }
+        .remove-player-icon { cursor: pointer; color: var(--cor-rejeitado); }
+        .remove-player-icon:hover { opacity: 0.7; }
+        .btn-danger { background-color: var(--cor-rejeitado); color: white; }
     </style>
 </head>
 <body>
@@ -76,12 +110,11 @@
     </main>
 
     <script type="module">
-        // --- MUDANÇA 1: ADICIONADO "sendPasswordResetEmail" ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, writeBatch, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, writeBatch, getDocs, deleteDoc, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO REAL DO FIREBASE
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDybx8XH8UeZvQQvQhnse9wcZLATft5tiA",
             authDomain: "rei-da-varzea.firebaseapp.com",
@@ -101,6 +134,11 @@
         let selectedProfile = null;
         let deferredPrompt;
 
+        const pencilIconSVG = `<svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>`;
+        const logoutIconSVG = `<svg class="logout-icon" id="logout-btn" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>`;
+        const removeIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="remove-player-icon" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>`;
+        const infoIconSVG = `<svg class="help-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.064.293.006.399.287.47l.45.082.082-.38-.29-.071c-.293-.07-.352-.176-.288-.469l.738-3.468c.064-.293-.006-.399-.287-.47zM8 5.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>`;
+
         function render(screen, data = {}) { mainContainer.innerHTML = screen(data); attachEventListeners(); }
 
         onAuthStateChanged(auth, user => {
@@ -117,8 +155,10 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            if (mainContainer.querySelector('#login-form')) {
-                render(screenLogin);
+            if (mainContainer.querySelector('#login-form') || mainContainer.querySelector('#cadastro-form')) {
+                if(state.currentUser) return;
+                const isLoginScreen = !!mainContainer.querySelector('#login-form');
+                if(isLoginScreen) render(screenLogin); else render(screenCadastro);
             }
         });
 
@@ -158,44 +198,58 @@
         async function handleLogin(e) { e.preventDefault(); try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { alert('Utilizador ou senha inválidos!'); } }
         async function handleLogout() { await signOut(auth); }
         async function handleCadastroSubmit(e) { e.preventDefault(); const email = document.getElementById('email').value; const password = document.getElementById('password').value; const confirmPassword = document.getElementById('confirm-password').value; const name = document.getElementById('nome').value; if (!name || !email || !password || !selectedProfile) return alert("Preencha todos os campos e selecione um perfil."); if (password !== confirmPassword) { return alert("Erro: As senhas não conferem!"); } try { const userCredential = await createUserWithEmailAndPassword(auth, email, password); await setDoc(doc(db, "users", userCredential.user.uid), { name, nickname: document.getElementById('apelido').value, email, profile: selectedProfile, position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, teamId: null, createdAt: serverTimestamp() }); } catch (error) { alert("Erro ao criar conta: " + error.message); } }
+        async function handleForgotPassword(e) { e.preventDefault(); const email = document.getElementById('email-reset').value; if (!email) { return alert("Por favor, digite seu e-mail."); } try { await sendPasswordResetEmail(auth, email); alert("Se houver uma conta com este e-mail, um link para redefinição de senha foi enviado. Verifique sua caixa de entrada e spam!"); render(screenLogin); } catch (error) { console.error("Erro ao enviar e-mail de recuperação:", error); alert("Ocorreu um erro. Verifique o e-mail digitado e tente novamente."); } }
+        async function handleGoogleSignIn() { const provider = new GoogleAuthProvider(); try { const result = await signInWithPopup(auth, provider); const user = result.user; const userDocRef = doc(db, "users", user.uid); const docSnap = await getDoc(userDocRef); if (!docSnap.exists()) { await setDoc(userDocRef, { name: user.displayName, email: user.email, profile: null, teamId: null, createdAt: serverTimestamp() }); } } catch (error) { console.error("Erro no login com Google: ", error); alert("Não foi possível fazer login com o Google. Tente novamente."); } }
+        async function handleProfileSelection(e) { e.preventDefault(); if (!selectedProfile) return alert("Por favor, selecione um perfil."); const dataToUpdate = { profile: selectedProfile, position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, }; try { await updateDoc(doc(db, "users", state.currentUser.uid), dataToUpdate); } catch(error) { console.error("Erro ao salvar perfil: ", error); alert("Ocorreu um erro ao salvar seu perfil."); } }
+        async function handleDonoSubmit(e) { e.preventDefault(); const teamName = document.getElementById('nome-time').value; if (!teamName) return alert('Digite o nome do time.'); const teamCode = `${teamName.substring(0, 4).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`; const newTeamRef = await addDoc(collection(db, "teams"), { name: teamName, ownerId: state.currentUser.uid, code: teamCode, createdAt: serverTimestamp() }); await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: newTeamRef.id }); }
+        async function handleJogadorSubmit(e) { e.preventDefault(); const code = document.getElementById('codigo-time').value.toUpperCase(); const q = query(collection(db, "teams"), where("code", "==", code)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: querySnapshot.docs[0].id }); } else { alert("Código de convite inválido!"); } }
+        async function handleUpdateUser(e) { e.preventDefault(); const newName = document.getElementById('edit-nome').value; const newNickname = document.getElementById('edit-apelido').value; if (!newName) return alert('O nome não pode ficar em branco.'); try { await updateDoc(doc(db, "users", state.currentUser.uid), { name: newName, nickname: newNickname }); alert('Perfil atualizado com sucesso!'); if (state.userData.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); } catch (error) { console.error("Erro ao atualizar perfil:", error); alert('Não foi possível atualizar o perfil.'); } }
         
-        // --- NOVO: FUNÇÃO PARA ENVIAR E-MAIL DE RECUPERAÇÃO ---
-        async function handleForgotPassword(e) {
+        async function handleUpdateTeam(e) {
             e.preventDefault();
-            const email = document.getElementById('email-reset').value;
-            if (!email) {
-                return alert("Por favor, digite seu e-mail.");
-            }
+            const newTeamName = document.getElementById('edit-team-name').value;
+            const newLogoUrl = document.getElementById('edit-team-logo').value;
+            if (!newTeamName) return alert('O nome do time não pode ficar em branco.');
             try {
-                await sendPasswordResetEmail(auth, email);
-                alert("Se houver uma conta com este e-mail, um link para redefinição de senha foi enviado. Verifique sua caixa de entrada e spam!");
-                render(screenLogin); // Volta para a tela de login
+                await updateDoc(doc(db, "teams", state.team.id), { 
+                    name: newTeamName,
+                    logoUrl: newLogoUrl 
+                });
+                alert('Time atualizado com sucesso!');
+                render(screenDonoDashboard);
             } catch (error) {
-                console.error("Erro ao enviar e-mail de recuperação:", error);
-                alert("Ocorreu um erro. Verifique o e-mail digitado e tente novamente.");
+                console.error("Erro ao atualizar time:", error);
+                alert('Não foi possível atualizar o time.');
+            }
+        }
+        
+        async function handleLeaveTeam() { render(screenConfirmAction, { title: 'Sair do Time', message: 'Você tem certeza que deseja sair do time? Esta ação não pode ser desfeita.', confirmAction: 'confirm-leave-team' }); }
+        async function handleRemovePlayer(playerId, playerName) { render(screenConfirmAction, { title: 'Remover Jogador', message: `Você tem certeza que deseja remover ${playerName} do time?`, confirmAction: 'confirm-remove-player', targetId: playerId }); }
+
+        async function confirmLeaveTeam() {
+            try {
+                if (typeof state.unsubscribe === 'function') {
+                    state.unsubscribe();
+                    state.unsubscribe = () => {};
+                }
+                await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: null });
+            } catch (error) {
+                console.error("Erro ao sair do time:", error);
+                alert("Não foi possível sair do time. Tente novamente.");
             }
         }
 
-        async function handleGoogleSignIn() {
-            const provider = new GoogleAuthProvider();
+        async function confirmRemovePlayer(playerId) {
             try {
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                const userDocRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userDocRef);
-                if (!docSnap.exists()) {
-                    await setDoc(userDocRef, { name: user.displayName, email: user.email, profile: null, teamId: null, createdAt: serverTimestamp() });
-                }
-            } catch (error) { console.error("Erro no login com Google: ", error); alert("Não foi possível fazer login com o Google. Tente novamente."); }
+                await updateDoc(doc(db, "users", playerId), { teamId: null });
+                alert("Jogador removido com sucesso!");
+                render(screenElenco);
+            } catch (error) {
+                console.error("Erro ao remover jogador:", error);
+                alert("Não foi possível remover o jogador. Tente novamente.");
+            }
         }
-        async function handleProfileSelection(e) {
-            e.preventDefault();
-            if (!selectedProfile) return alert("Por favor, selecione um perfil.");
-            const dataToUpdate = { profile: selectedProfile, position: selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, };
-            try { await updateDoc(doc(db, "users", state.currentUser.uid), dataToUpdate); } catch(error) { console.error("Erro ao salvar perfil: ", error); alert("Ocorreu um erro ao salvar seu perfil."); }
-        }
-        async function handleDonoSubmit(e) { e.preventDefault(); const teamName = document.getElementById('nome-time').value; if (!teamName) return alert('Digite o nome do time.'); const teamCode = `${teamName.substring(0, 4).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`; const newTeamRef = await addDoc(collection(db, "teams"), { name: teamName, ownerId: state.currentUser.uid, code: teamCode, createdAt: serverTimestamp() }); await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: newTeamRef.id }); }
-        async function handleJogadorSubmit(e) { e.preventDefault(); const code = document.getElementById('codigo-time').value.toUpperCase(); const q = query(collection(db, "teams"), where("code", "==", code)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { await updateDoc(doc(db, "users", state.currentUser.uid), { teamId: querySnapshot.docs[0].id }); } else { alert("Código de convite inválido!"); } }
+
         async function handleAgendarJogo(e) { e.preventDefault(); await addDoc(collection(db, "games"), { teamId: state.userData.teamId, opponent: document.getElementById('opponent').value, location: document.getElementById('location').value, dateTime: new Date(`${document.getElementById('game-date').value}T${document.getElementById('game-time').value}`).toISOString(), votingOpen: false, resultsEntered: false, createdAt: serverTimestamp() }); }
         async function handleConfirmation(gameId, status) { const confirmationRef = doc(db, `games/${gameId}/confirmations`, state.currentUser.uid); const docSnap = await getDoc(confirmationRef); if (docSnap.exists() && docSnap.data().status === status) { await deleteDoc(confirmationRef); } else { await setDoc(confirmationRef, { userId: state.currentUser.uid, status }); } }
         async function handleGameResultSubmit(e, game) { e.preventDefault(); const winnerRadio = document.querySelector('input[name="winner"]:checked'); if (!winnerRadio) return alert("Por favor, selecione o resultado da partida."); const winner = winnerRadio.value; const scoreHome = parseInt(document.getElementById('score-home').value) || 0; const scoreAway = parseInt(document.getElementById('score-away').value) || 0; if ((winner === 'home' && scoreHome <= scoreAway) || (winner === 'away' && scoreHome >= scoreAway) || (winner === 'draw' && scoreHome !== scoreAway)) return alert('Resultado inconsistente com o placar!'); await updateDoc(doc(db, "games", game.id), { result: { winner, score: { home: scoreHome, away: scoreAway } } }); render(screenRegistrarGols, { game }); }
@@ -205,58 +259,215 @@
         async function handleSkipVote(game) { await setDoc(doc(db, `games/${game.id}/votes`, state.currentUser.uid), { voterId: state.currentUser.uid, votedPlayerId: null }); }
         function handleRegisterResults(gameId) { const game = state.games.find(g => g.id === gameId); render(screenRegisterResult, { game }); }
 
-        const logoHTML = '<div class="logo-container"><img src="https://i.imgur.com/tWfGLm6.png" alt="Logo Rei da Várzea" class="logo-img"></div>';
+        const logoHTML = `<div class="logo-container"><img src="https://i.imgur.com/tWfGLm6.png" alt="Logo Rei da Várzea" class="logo-img"></div>`;
         const googleButtonHTML = `<div class="login-link" style="margin-bottom: 20px; font-size: 0.9em; color: var(--cor-texto-secundario);">ou</div><button type="button" id="google-signin-btn" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 10px;"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;">Continuar com Google</button>`;
         
-        // --- MUDANÇA 2: TELA DE LOGIN ATUALIZADA COM LINK ---
-        const screenLogin = () => `<div class="form-container">${logoHTML}<h2>Login</h2>
-            <form id="login-form">
-                <div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div>
-                <div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div>
-                <a href="#" id="forgot-password-btn" class="forgot-password-link">Esqueci minha senha</a>
-                <button type="submit" class="btn btn-submit">Entrar</button>
-            </form>
-            ${googleButtonHTML}
-            <p class="login-link">Não tem conta? <a id="show-register-btn" href="#">Cadastre-se</a></p>
-            <button type="button" id="install-button" class="btn btn-secondary" style="display: ${deferredPrompt ? 'block' : 'none'};">Instalar Aplicativo</button>
-            </div>`;
-        
-        // --- NOVO: TELA DE RECUPERAÇÃO DE SENHA ---
-        const screenForgotPassword = () => `<div class="form-container">${logoHTML}<h2>Recuperar Senha</h2>
-            <p style="text-align:center; color: var(--cor-texto-secundario); margin-bottom: 20px;">Digite seu e-mail para receber o link de recuperação.</p>
-            <form id="forgot-password-form">
-                <div class="input-group"><label for="email-reset">E-mail</label><input type="email" id="email-reset" required></div>
-                <button type="submit" class="btn btn-submit">Enviar</button>
-            </form>
-            <p class="login-link"><a id="show-login-btn" href="#">Voltar para o Login</a></p>
-            </div>`;
-
+        const screenLogin = () => `<div class="form-container">${logoHTML}<h2>Login</h2><form id="login-form"><div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div><a href="#" id="forgot-password-btn" style="display: block; text-align: right; font-size: 0.8em; margin-top: -10px; margin-bottom: 20px;">Esqueci minha senha</a><button type="submit" class="btn btn-submit">Entrar</button></form>${googleButtonHTML}<p class="login-link">Não tem conta? <a id="show-register-btn" href="#">Cadastre-se</a></p><button type="button" id="install-button" class="btn btn-install" style="display: ${deferredPrompt ? 'block' : 'none'};">Instalar Aplicativo</button></div>`;
+        const screenForgotPassword = () => `<div class="form-container">${logoHTML}<h2>Recuperar Senha</h2><p style="text-align:center; color: var(--cor-texto-secundario); margin-bottom: 20px;">Digite seu e-mail para receber o link de recuperação.</p><form id="forgot-password-form"><div class="input-group"><label for="email-reset">E-mail</label><input type="email" id="email-reset" required></div><button type="submit" class="btn btn-submit">Enviar</button></form><p class="login-link"><a id="show-login-btn" href="#">Voltar para o Login</a></p></div>`;
         const screenCadastro = () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${logoHTML}<h2>Crie sua Conta</h2><form id="cadastro-form"><div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div><div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div><div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div><div class="input-group"><label for="confirm-password">Confirme sua senha</label><input type="password" id="confirm-password" required></div><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">CRIAR CONTA</button></form>${googleButtonHTML}<p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p></div>`;};
         const screenChooseProfile = () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${logoHTML}<h2>Complete seu Cadastro</h2><p style="text-align: center; margin-bottom: 20px;">Bem-vindo(a), ${state.currentUser?.displayName || 'jogador(a)'}! Falta só mais um passo.</p><form id="profile-selection-form"><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Qual seu perfil no time?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">Salvar e Continuar</button></form></div>`; };
         const screenDonoCreateTeam = () => `<div class="form-container">${logoHTML}<h2>Crie seu time</h2><form id="dono-form"><div class="input-group"><label for="nome-time">Nome do seu time</label><input type="text" id="nome-time" required></div><button type="submit" class="btn btn-submit">Criar e Avançar</button></form></div>`;
         const screenJogadorJoinTeam = () => `<div class="form-container">${logoHTML}<h2>Entre para um Time</h2><form id="jogador-form"><div class="input-group"><label for="codigo-time">Código de Convite</label><input type="text" id="codigo-time" required></div><button type="submit" class="btn btn-submit">Entrar no Time</button></form></div>`;
         const screenAgendarJogo = () => `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Agendar Jogo</h2><form id="agendar-jogo-form"><div class="input-group"><label>Adversário</label><input type="text" id="opponent" required></div><div class="input-group"><label>Local</label><input type="text" id="location" required></div><div class="input-group"><label>Data</label><input type="date" id="game-date" required></div><div class="input-group"><label>Hora</label><input type="time" id="game-time" required></div><button type="submit" class="btn btn-submit">Confirmar e Convocar</button></form></div>`;
-        const screenDonoDashboard = () => { if (!state.team || !state.userData) return `<div class="form-container">${logoHTML}<p>Carregando dados do time...</p></div>`; const teamPlayers = state.players.filter(p => p.profile === 'jogador'); const hasPendingGame = state.games.some(g => !g.resultsEntered); const agendarBtn = teamPlayers.length >= 2 && !hasPendingGame ? `<button id="agendar-jogo-btn" class="btn btn-submit">+ Agendar Novo Jogo</button>` : `<button class="btn btn-submit" disabled>+ Agendar Novo Jogo</button>`; let gamesHTML = state.games.sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).map(game => { let gameActionsHTML = ''; const confirmations = state.confirmations[game.id] || []; const votes = state.votes[game.id] || []; const goals = state.goals[game.id] || []; if (!game.resultsEntered) { const teamPlayerIds = teamPlayers.map(p => p.id); const responses = confirmations.filter(c => teamPlayerIds.includes(c.userId)); const allPlayersResponded = responses.length >= teamPlayers.length; const ownerConfirmation = confirmations.find(c => c.userId === state.currentUser.uid); let ownerConfirmBtnClass = '', ownerRejectBtnClass = ''; if (ownerConfirmation) { ownerRejectBtnClass = ownerConfirmation.status === 'confirmed' ? 'dimmed' : ''; ownerConfirmBtnClass = ownerConfirmation.status === 'rejected' ? 'dimmed' : ''; } const ownerConfirmationHTML = `<div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${ownerConfirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${ownerRejectBtnClass}">❌ TÔ FORA</button></div>`; const registerButtonHTML = `<button class="btn btn-secondary register-results-btn" data-game-id="${game.id}" ${!allPlayersResponded ? 'disabled' : ''} title="${!allPlayersResponded ? 'Aguardando resposta de todos os jogadores' : 'Registrar resultado do jogo'}">🏁 Registrar Resultados</button>`; const confirmed = confirmations.filter(c=>c.status === 'confirmed').map(c=>state.players.find(p=>p.id===c.userId)).filter(Boolean); const rejected = confirmations.filter(c=>c.status === 'rejected').map(c=>state.players.find(p=>p.id===c.userId)).filter(Boolean); const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div>`; gameActionsHTML = ownerConfirmationHTML + registerButtonHTML + attendanceHTML; } else { const { result } = game; const scoreText = (result.score.home !== undefined && result.score.away !== undefined) ? `(${result.score.home}x${result.score.away})` : ''; const winnerText = result.winner === 'draw' ? 'Empate' : `${result.winner === 'home' ? state.team.name : game.opponent} venceu`; const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length; let craquesText = 'Votação em andamento...'; if (votes.length >= eligibleVotersCount && eligibleVotersCount > 0) { const voteCounts = votes.filter(v => v.votedPlayerId).reduce((acc, vote) => { acc[vote.votedPlayerId] = (acc[vote.votedPlayerId] || 0) + 1; return acc; }, {}); const maxVotes = Math.max(0, ...Object.values(voteCounts)); const craques = maxVotes > 0 ? Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes).map(id => state.players.find(p=>p.id==id)?.name) : []; craquesText = craques.length > 0 ? craques.join(', ') : 'N/A'; } const artilheiros = goals.map(g => { const player = state.players.find(u => u.id === g.playerId); return `${player?.name || '...'} (${g.quantity} gols)`; }); gameActionsHTML = `<div class="attendance-list"><h4>Resultado: ${winnerText} ${scoreText}</h4><h4>🏆 Craque(s): ${craquesText}</h4><h4>⚽ Artilharia: ${artilheiros.length > 0 ? artilheiros.join(', ') : 'Sem gols'}</h4></div>`; } return `<div class="game-card" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p>${gameActionsHTML}</div>`; }).join(''); return `<div class="form-container"><h3 style="text-align:center; margin-bottom: 15px;">Dashboard: ${state.team.name}</h3><p class="login-link">Logado como: ${state.userData.email} (<a id="logout-btn" href="#">Sair</a>)</p><hr style="border-color:#333;margin:15px 0;">${agendarBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${state.team.code}</span></div><h2 class="section-title" style="margin-top:30px;">Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;};
-        const screenJogadorDashboard = () => { if (!state.team || !state.userData) return `<div class="form-container">${logoHTML}<p>Carregando dados do time...</p></div>`; let gamesHTML = state.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).map(game => { const confirmations = state.confirmations[game.id] || []; const myC = confirmations.find(c => c.userId === state.currentUser.uid); let cardClass = '', confirmBtnClass = '', rejectBtnClass = ''; if (myC) { cardClass = myC.status === 'confirmed' ? 'confirmed' : 'rejected'; rejectBtnClass = myC.status === 'confirmed' ? 'dimmed' : ''; confirmBtnClass = myC.status === 'rejected' ? 'dimmed' : ''; } return `<div class="game-card ${cardClass}" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>📍 ${game.location}</p><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${confirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${rejectBtnClass}">❌ TÔ FORA</button></div></div>`; }).join(''); let votePopupHTML = ''; const pendingVoteGame = state.games.find(g => { const confirmations = state.confirmations[g.id] || []; const votes = state.votes[g.id] || []; const myConfirmation = confirmations.find(c => c.userId === state.currentUser.uid); const myVote = votes.find(v => v.voterId === state.currentUser.uid); return g.votingOpen && myConfirmation?.status === 'confirmed' && !myVote; }); if (pendingVoteGame) { votePopupHTML = `<div class="popup-overlay"><div class="vote-card"><h4>Votação aberta!</h4><p>A votação para o Craque do Time do jogo contra <strong>${pendingVoteGame.opponent}</strong> está aberta!</p><button id="go-to-vote-btn" class="btn btn-submit" data-game-id="${pendingVoteGame.id}" style="margin-top: 20px;">Votar Agora!</button></div></div>`; } return `${votePopupHTML}<div class="form-container"><h3 style="text-align:center; margin-bottom: 15px;">${state.team.name}</h3><p class="login-link">Logado como: ${state.userData.email} (<a id="logout-btn" href="#">Sair</a>)</p><hr style="border-color: #333; margin: 20px 0;"><button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Próximos Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;};
-        const screenElenco = () => { let membersHTML = state.players.map(member => `<li class="player-list-item"><div class="player-info"><span>${member.name}</span><span class="position">${member.position || '👑 Dono'}</span></div></li>`).join(''); return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Elenco: ${state.team.name}</h2><ul class="player-list">${membersHTML}</ul><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;};
+        
+        const dashboardHeader = () => {
+            const teamLogoPlaceholder = state.team.logoUrl 
+                ? `<img src="${state.team.logoUrl}" class="team-logo" onerror="this.parentElement.innerHTML = '${state.team.name.charAt(0).toUpperCase()}';">` 
+                : `<div class="team-logo">${state.team.name.charAt(0).toUpperCase()}</div>`;
+            const teamEditIcon = state.userData.profile === 'dono' ? `<a href="#" id="edit-team-btn" title="Editar dados do time">${pencilIconSVG}</a>` : '';
+            const userName = state.userData.name ? state.userData.name.split(' ')[0] : 'Rei da Várzea';
+            return `${logoutIconSVG}<div class="dashboard-header">${teamLogoPlaceholder}<div class="team-info"><div class="team-name-container"><h3 class="team-name">${state.team.name}</h3>${teamEditIcon}</div><div class="welcome-message"><span>Seja bem-vindo, ${userName}</span><a href="#" id="edit-user-btn" title="Editar meu perfil">${pencilIconSVG}</a></div></div></div>`;
+        }
+
+        const generateDashboardNotifications = () => {
+            const seenNotifications = JSON.parse(localStorage.getItem('seenGameNotifications')) || [];
+            const finishedGames = state.games.filter(g => g.resultsEntered).sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime));
+            const latestGame = finishedGames.length > 0 ? finishedGames[0] : null;
+
+            if (!latestGame) return '';
+
+            let notificationsHTML = '';
+            const game = latestGame;
+            
+            const votes = state.votes[game.id] || [];
+            const goals = state.goals[game.id] || [];
+            const confirmations = state.confirmations[game.id] || [];
+            const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length;
+
+            const mvpNotificationId = `${game.id}-mvp`;
+            if (votes.length >= eligibleVotersCount && !seenNotifications.includes(mvpNotificationId)) {
+                if (votes.length > 0) {
+                    const voteCounts = votes.filter(v => v.votedPlayerId).reduce((acc, vote) => { acc[vote.votedPlayerId] = (acc[vote.votedPlayerId] || 0) + 1; return acc; }, {});
+                    const maxVotes = Math.max(0, ...Object.values(voteCounts));
+                    if (maxVotes > 0) {
+                        const mvps = Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes);
+                        if (mvps.includes(state.currentUser.uid)) {
+                            notificationsHTML += `<div class="dashboard-notification mvp" data-notification-id="${mvpNotificationId}"><button class="notification-close-btn" title="Dispensar">&times;</button><p>🏆 Parabéns! Você foi eleito o <strong>Craque da Partida</strong> contra ${game.opponent}!</p></div>`;
+                        }
+                    }
+                }
+            }
+
+            const goalsNotificationId = `${game.id}-goals`;
+            if (!seenNotifications.includes(goalsNotificationId)) {
+                const myGoals = goals.find(g => g.playerId === state.currentUser.uid);
+                if (myGoals && myGoals.quantity > 0) {
+                    notificationsHTML += `<div class="dashboard-notification" data-notification-id="${goalsNotificationId}"><button class="notification-close-btn" title="Dispensar">&times;</button><p>⚽ Você marcou <strong>${myGoals.quantity} gol(s)</strong> na partida contra ${game.opponent}!</p></div>`;
+                }
+            }
+
+            return notificationsHTML ? `<div class="dashboard-notification-area">${notificationsHTML}</div>` : '';
+        }
+
+        const screenDonoDashboard = () => { 
+            if (!state.team || !state.userData) return `<div class="form-container">${logoHTML}<p>Carregando dados do time...</p></div>`; 
+            const teamPlayers = state.players.filter(p => p.profile === 'jogador'); 
+            
+            const upcomingGames = state.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+            const nextGame = upcomingGames.length > 0 ? upcomingGames[0] : null;
+
+            const hasPendingGame = !!nextGame;
+            const agendarBtn = teamPlayers.length >= 2 && !hasPendingGame ? `<button id="agendar-jogo-btn" class="btn btn-submit">+ Agendar Novo Jogo</button>` : `<button class="btn btn-submit" disabled>+ Agendar Novo Jogo</button>`; 
+            
+            let gameSectionHTML = '<p style="text-align:center; margin-top: 20px;">Nenhuma partida agendada.</p>';
+            let sectionTitle = "Próximo Jogo";
+
+            if (nextGame) {
+                const game = nextGame;
+                let gameActionsHTML = '';
+                const confirmations = state.confirmations[game.id] || [];
+                
+                const teamPlayerIds = teamPlayers.map(p => p.id);
+                const responses = confirmations.filter(c => teamPlayerIds.includes(c.userId));
+                const allPlayersResponded = responses.length >= teamPlayers.length;
+                const ownerConfirmation = confirmations.find(c => c.userId === state.currentUser.uid);
+                let ownerConfirmBtnClass = '', ownerRejectBtnClass = '';
+                if (ownerConfirmation) {
+                    ownerRejectBtnClass = ownerConfirmation.status === 'confirmed' ? 'dimmed' : '';
+                    ownerConfirmBtnClass = ownerConfirmation.status === 'rejected' ? 'dimmed' : '';
+                }
+                const ownerConfirmationHTML = `<div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${ownerConfirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${ownerRejectBtnClass}">❌ TÔ FORA</button></div>`;
+                const registerButtonHTML = `<button class="btn btn-secondary register-results-btn" data-game-id="${game.id}" ${!allPlayersResponded ? 'disabled' : ''} title="${!allPlayersResponded ? 'Aguardando resposta de todos os jogadores' : 'Registrar resultado do jogo'}">🏁 Registrar Resultados</button>`;
+                const confirmed = confirmations.filter(c=>c.status === 'confirmed').map(c=>state.players.find(p=>p.id===c.userId)).filter(Boolean);
+                const rejected = confirmations.filter(c=>c.status === 'rejected').map(c=>state.players.find(p=>p.id===c.userId)).filter(Boolean);
+                const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div>`;
+                gameActionsHTML = ownerConfirmationHTML + registerButtonHTML + attendanceHTML;
+                
+                gameSectionHTML = `<div class="game-card" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p>${gameActionsHTML}</div>`;
+            }
+
+            const appUrl = 'https://www.reidavarzea.com.br';
+            const mensagemWhatsapp = encodeURIComponent(`E aí! Estou te convidando para o meu time no app Rei da Várzea.\n\nNosso código de acesso é: *${state.team.code}*\n\nBaixe o app e junte-se a nós: ${appUrl}`);
+            const whatsappLink = `https://api.whatsapp.com/send?text=${mensagemWhatsapp}`;
+            return `<div class="form-container">${dashboardHeader()}${generateDashboardNotifications()}<hr style="border-color:#333;margin:15px 0;">${agendarBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${state.team.code}</span><a href="${whatsappLink}" target="_blank" class="share-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg><span>Compartilhar</span></a></div><h2 class="section-title" style="margin-top:30px;">${sectionTitle}</h2>${gameSectionHTML}</div>`;
+        };
+
+        const screenJogadorDashboard = () => { 
+            if (!state.team || !state.userData) return `<div class="form-container">${logoHTML}<p>Carregando dados do time...</p></div>`; 
+            let gamesHTML = state.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).map(game => { const confirmations = state.confirmations[game.id] || []; const myC = confirmations.find(c => c.userId === state.currentUser.uid); let cardClass = '', confirmBtnClass = '', rejectBtnClass = ''; if (myC) { cardClass = myC.status === 'confirmed' ? 'confirmed' : 'rejected'; rejectBtnClass = myC.status === 'confirmed' ? 'dimmed' : ''; confirmBtnClass = myC.status === 'rejected' ? 'dimmed' : ''; } return `<div class="game-card ${cardClass}" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>📍 ${game.location}</p><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${confirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${rejectBtnClass}">❌ TÔ FORA</button></div></div>`; }).join(''); 
+            let votePopupHTML = ''; 
+            const pendingVoteGame = state.games.find(g => { const confirmations = state.confirmations[g.id] || []; const votes = state.votes[g.id] || []; const myConfirmation = confirmations.find(c => c.userId === state.currentUser.uid); const myVote = votes.find(v => v.voterId === state.currentUser.uid); return g.votingOpen && myConfirmation?.status === 'confirmed' && !myVote; }); 
+            if (pendingVoteGame) { votePopupHTML = `<div class="popup-overlay"><div class="vote-card"><h4>Votação aberta!</h4><p>A votação para o Craque do Time do jogo contra <strong>${pendingVoteGame.opponent}</strong> está aberta!</p><button id="go-to-vote-btn" class="btn btn-submit" data-game-id="${pendingVoteGame.id}" style="margin-top: 20px;">Votar Agora!</button></div></div>`; } 
+            return `${votePopupHTML}<div class="form-container">${dashboardHeader()}${generateDashboardNotifications()}<hr style="border-color: #333; margin: 20px 0;"><button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Próximos Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;
+        };
+
+        const screenElenco = () => { 
+            let membersHTML = state.players.map(member => {
+                const removeIcon = state.userData.profile === 'dono' && member.id !== state.currentUser.uid 
+                    ? `<a href="#" class="remove-player-link" data-player-id="${member.id}" data-player-name="${member.name}">${removeIconSVG}</a>` 
+                    : '';
+                return `<li class="player-list-item"><div class="player-info"><span>${member.name}</span><span class="position">${member.position || '👑 Dono'}</span></div>${removeIcon}</li>`;
+            }).join(''); 
+            return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Elenco: ${state.team.name}</h2><ul class="player-list">${membersHTML}</ul><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;
+        };
+        
+        // --- TELA DE EDIÇÃO DO TIME MODIFICADA ---
+        const screenEditTeam = () => `<div class="modal-overlay"><div class="edit-modal-card"><h2>Editar Time</h2><form id="edit-team-form"><div class="input-group"><label for="edit-team-name">Nome do Time</label><input type="text" id="edit-team-name" value="${state.team.name || ''}" required></div><div class="input-group"><label for="edit-team-logo">URL do Logo <span id="logo-help-btn" title="Como obter o URL de uma imagem?">${infoIconSVG}</span></label><input type="url" id="edit-team-logo" placeholder="Cole o link da imagem aqui" value="${state.team.logoUrl || ''}"></div><button type="submit" class="btn btn-submit">Salvar Alterações</button></form><button id="close-modal-btn" class="btn-skip-vote">Cancelar</button></div></div>`;
+        
+        const screenEditUser = () => `<div class="modal-overlay"><div class="edit-modal-card"><h2>Editar Perfil</h2><form id="edit-user-form"><div class="input-group"><label for="edit-nome">Seu nome</label><input type="text" id="edit-nome" value="${state.userData.name || ''}" required></div><div class="input-group"><label for="edit-apelido">Apelido</label><input type="text" id="edit-apelido" value="${state.userData.nickname || ''}"></div><button type="submit" class="btn btn-submit">Salvar Alterações</button></form><button id="leave-team-btn" class="btn btn-danger" style="width:100%; margin-top: 15px;">Sair do Time</button><button id="close-modal-btn" class="btn-skip-vote">Cancelar</button></div></div>`;
+        const screenConfirmAction = ({ title, message, confirmAction, targetId }) => `<div class="modal-overlay"><div class="confirm-modal-card"><h2>${title}</h2><p style="margin: 20px 0; text-align: center;">${message}</p><div style="display: flex; gap: 10px;"><button id="cancel-action-btn" class="btn btn-secondary" style="flex-grow: 1;">Cancelar</button><button id="confirm-action-btn" class="btn btn-danger" style="flex-grow: 1;" data-action="${confirmAction}" data-target-id="${targetId || ''}">Sim, tenho certeza</button></div></div></div>`;
+        const screenLogoHelp = () => `<div class="modal-overlay" id="logo-help-modal">
+            <div class="help-modal-card">
+                <h2>Como obter o link de um logo?</h2>
+                <ul style="text-align: left; margin: 20px 0;">
+                    <li>1. Encontre a imagem que deseja usar na internet (Google Imagens, etc.).</li>
+                    <li>2. No computador, clique com o botão direito do mouse sobre a imagem.</li>
+                    <li>3. No menu que aparecer, selecione a opção <strong>"Copiar endereço da imagem"</strong>.</li>
+                    <li>4. Volte para o app e cole o link no campo "URL do Logo".</li>
+                </ul>
+                <button id="close-help-modal-btn" class="btn btn-submit">Entendi!</button>
+            </div>
+        </div>`;
+
         const screenVotacaoCraque = ({ game }) => { const confirmations = state.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => state.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.filter(p => p.id !== state.currentUser.uid).map(p => `<li><button type="button" class="btn btn-profile player-vote-btn" data-player-id="${p.id}">${p.name}</button></li>`).join(''); return `<div class="modal-overlay"><div class="vote-card"><h4>Votação Aberta!</h4><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><p>Escolha o <strong>Craque do Time</strong>:</p><ul class="player-vote-list">${playersHTML}</ul><button id="confirm-vote-btn" class="btn btn-submit" data-game-id="${game.id}" disabled>Confirmar Voto</button><button id="skip-vote-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular Votação</button></div></div>`; };
         const screenRegisterResult = ({ game }) => `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Resultado Final</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="result-form" data-game-id="${game.id}"><div class="winner-selection"><h3 class="section-title">Quem venceu?</h3><div class="input-group"><label><input type="radio" name="winner" value="home" required> Nosso time</label></div><div class="input-group"><label><input type="radio" name="winner" value="away"> O Adversário</label></div><div class="input-group"><label><input type="radio" name="winner" value="draw"> Empate</label></div></div><h3 class="section-title">Placar (Opcional)</h3><div class="score-input-container"><span>Nosso Time</span><input type="number" id="score-home" min="0" value="0"><span>X</span><input type="number" id="score-away" min="0" value="0"><span>Adversário</span></div><button type="submit" class="btn btn-submit">Salvar e ir para Artilharia</button></form></div>`;
         const screenRegistrarGols = ({ game }) => { const confirmations = state.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => state.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.map(p => `<div class="goal-registration-item"><label for="player-${p.id}">${p.name} (${p.position || '👑 Dono'})</label><input type="number" class="goal-input" data-player-id="${p.id}" min="0" value="0"></div>`).join(''); return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Artilharia da Partida</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="goal-form" data-game-id="${game.id}">${playersHTML}<button type="submit" class="btn btn-submit" style="margin-top:20px;">Salvar Artilharia</button></form><button id="skip-goals-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular e Encerrar</button></div>`;};
         const screenHistorico = () => { let gamesHTML = state.games.sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).filter(g => g.resultsEntered).map(game => { const { result } = game; const confirmations = state.confirmations[game.id] || []; const votes = state.votes[game.id] || []; const goals = state.goals[game.id] || []; const scoreText = (result.score.home !== undefined && result.score.away !== undefined) ? `(${result.score.home}x${result.score.away})` : ''; const winnerText = result.winner === 'draw' ? 'Empate' : `${result.winner === 'home' ? state.team.name : game.opponent} venceu`; const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length; let craquesText = 'Votação em andamento...'; if (votes.length >= eligibleVotersCount && eligibleVotersCount > 0) { const voteCounts = votes.filter(v => v.votedPlayerId).reduce((acc, vote) => { acc[vote.votedPlayerId] = (acc[vote.votedPlayerId] || 0) + 1; return acc; }, {}); const maxVotes = Math.max(0, ...Object.values(voteCounts)); const craques = maxVotes > 0 ? Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes).map(id => state.players.find(p=>p.id==id)?.name) : []; craquesText = craques.length > 0 ? craques.join(', ') : 'N/A'; } const artilheiros = goals.map(g => { const player = state.players.find(u => u.id === g.playerId); return `${player?.name || '...'} (${g.quantity} gols)`; }); return `<div class="game-card"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="attendance-list"><p><strong>Resultado: ${winnerText} ${scoreText}</strong></p><p><strong>🏆 Craque(s):</strong> ${craquesText}</p><p><strong>⚽ Artilharia:</strong> ${artilheiros.join(', ') || 'Sem gols'}</p></div></div>`;}).join(''); return `<div class="form-container">${logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Histórico de Jogos</h2>${gamesHTML || '<p>Nenhum jogo no histórico.</p>'}<button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;}
 
-        // --- MUDANÇA 3: ATUALIZAÇÃO DOS EVENTOS ---
         function attachEventListeners() {
-            const installButton = document.getElementById('install-button');
-            if (installButton) installButton.addEventListener('click', handleInstallClick);
-
-            document.getElementById('google-signin-btn')?.addEventListener('click', handleGoogleSignIn);
             document.getElementById('show-register-btn')?.addEventListener('click', () => render(screenCadastro));
             document.getElementById('show-login-btn')?.addEventListener('click', () => render(screenLogin));
             document.getElementById('login-form')?.addEventListener('submit', handleLogin);
-            
-            // Listener para o novo link e formulário de recuperação
+            document.getElementById('install-button')?.addEventListener('click', handleInstallClick);
             document.getElementById('forgot-password-btn')?.addEventListener('click', () => render(screenForgotPassword));
             document.getElementById('forgot-password-form')?.addEventListener('submit', handleForgotPassword);
+            document.getElementById('google-signin-btn')?.addEventListener('click', handleGoogleSignIn);
+            document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+
+            document.getElementById('edit-team-btn')?.addEventListener('click', (e) => { e.preventDefault(); render(screenEditTeam); });
+            document.getElementById('edit-user-btn')?.addEventListener('click', (e) => { e.preventDefault(); render(screenEditUser); });
+            document.getElementById('close-modal-btn')?.addEventListener('click', () => { if (state.userData.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); });
+            
+            // --- LISTENERS ATUALIZADOS ---
+            document.getElementById('logo-help-btn')?.addEventListener('click', () => {
+                const helpModal = document.createElement('div');
+                helpModal.innerHTML = screenLogoHelp();
+                document.body.appendChild(helpModal);
+                document.getElementById('close-help-modal-btn').addEventListener('click', () => {
+                    document.getElementById('logo-help-modal').parentElement.remove();
+                });
+            });
+
+            document.getElementById('edit-user-form')?.addEventListener('submit', handleUpdateUser);
+            document.getElementById('edit-team-form')?.addEventListener('submit', handleUpdateTeam);
+            
+            document.getElementById('leave-team-btn')?.addEventListener('click', handleLeaveTeam);
+            document.querySelectorAll('.remove-player-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const playerId = e.currentTarget.dataset.playerId;
+                    const playerName = e.currentTarget.dataset.playerName;
+                    handleRemovePlayer(playerId, playerName);
+                });
+            });
+
+            document.getElementById('cancel-action-btn')?.addEventListener('click', () => { if (state.userData.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard); });
+            const confirmBtn = document.getElementById('confirm-action-btn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    const action = confirmBtn.dataset.action;
+                    const targetId = confirmBtn.dataset.targetId;
+                    if (action === 'confirm-leave-team') {
+                        confirmLeaveTeam();
+                    } else if (action === 'confirm-remove-player') {
+                        confirmRemovePlayer(targetId);
+                    }
+                });
+            }
+
+            document.querySelectorAll('.notification-close-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const notificationEl = e.currentTarget.closest('.dashboard-notification');
+                    const notificationId = notificationEl.dataset.notificationId;
+                    
+                    const seenNotifications = JSON.parse(localStorage.getItem('seenGameNotifications')) || [];
+                    if (!seenNotifications.includes(notificationId)) {
+                        seenNotifications.push(notificationId);
+                        localStorage.setItem('seenGameNotifications', JSON.stringify(seenNotifications));
+                    }
+                    if (state.userData.profile === 'dono') render(screenDonoDashboard); else render(screenJogadorDashboard);
+                });
+            });
 
             const profileSelectionForm = document.getElementById('profile-selection-form');
             if(profileSelectionForm) {
@@ -270,7 +481,6 @@
             document.getElementById('jogador-form')?.addEventListener('submit', handleJogadorSubmit);
             document.getElementById('agendar-jogo-btn')?.addEventListener('click', () => render(screenAgendarJogo));
             document.getElementById('agendar-jogo-form')?.addEventListener('submit', handleAgendarJogo);
-            document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
             document.querySelectorAll('.confirmation-buttons').forEach(div => { const gameId = div.dataset.gameId; if (!gameId) return; div.querySelector('.btn-confirm')?.addEventListener('click', () => handleConfirmation(gameId, 'confirmed')); div.querySelector('.btn-reject')?.addEventListener('click', () => handleConfirmation(gameId, 'rejected')); });
             document.querySelectorAll('.register-results-btn').forEach(b => b.addEventListener('click', function() { handleRegisterResults(this.dataset.gameId); }));
             const resultForm = document.getElementById('result-form'); if(resultForm) { resultForm.addEventListener('submit', (e) => handleGameResultSubmit(e, state.games.find(g=>g.id === resultForm.dataset.gameId)));}
@@ -291,17 +501,7 @@
                     .catch(error => console.log('Falha ao registrar Service Worker:', error));
             });
         }
-
-        let deferredPrompt; // Movido para o escopo do script principal
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (!state.currentUser) {
-                render(screenLogin);
-            }
-        });
-
+        
         async function handleInstallClick() {
             if (deferredPrompt) {
                 const installButton = document.getElementById('install-button');
