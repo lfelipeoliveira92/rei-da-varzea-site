@@ -13,7 +13,7 @@
     <style>
         /* CSS Completo com as novas classes */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        :root { --cor-amarelo: #FFD700; --cor-amarelo-hover: #E6C200; --cor-azul: #0057B7; --cor-fundo: #000000; --cor-fundo-container: #1A1A1A; --cor-texto: #FFFFFF; --cor-texto-secundario: #BDBDBD; --cor-input-fundo: #333333; --cor-input-borda: #444444; --cor-confirmado: #28a745; --cor-rejeitado: #dc3545;}
+        :root { --cor-amarelo: #FFD700; --cor-amarelo-hover: #E6C200; --cor-azul: #0057B7; --cor-fundo: #000000; --cor-fundo-container: #1A1A1A; --cor-texto: #FFFFFF; --cor-texto-secundario: #BDBDBD; --cor-input-fundo: #333333; --cor-input-borda: #444444; --cor-confirmado: #28a745; --cor-rejeitado: #dc3545; --cor-pendente: #ffc107;}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .container { width: 100%; max-width: 450px; }
@@ -64,6 +64,8 @@
         .dashboard-notification p { margin: 0 0 5px 0; font-weight: bold; }
         .dashboard-notification strong { font-weight: 700; }
         .notification-close-btn { position: absolute; top: 5px; right: 8px; background: none; border: none; color: inherit; font-size: 1.2em; cursor: pointer; opacity: 0.7; }
+        .dashboard-notification .btn-notification-action { background-color: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 12px; border-radius: 5px; margin-top: 10px; font-size: 0.9em; }
+
 
         .goal-registration-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
         .goal-registration-item label { flex-grow: 1; }
@@ -101,13 +103,48 @@
         .btn-danger { background-color: var(--cor-rejeitado); color: white; }
         .terms-group { font-size: 0.8em; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
         .terms-group input { width: auto; }
+
+        .payment-details-box { background-color: var(--cor-input-fundo); border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .payment-details-box p { margin-bottom: 10px; }
+        .payment-details-box strong { color: var(--cor-amarelo); }
+
+        /* Estilos para o Interruptor de Pagamento */
+        .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--cor-rejeitado); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--cor-confirmado); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .player-list-item.awaiting-approval { background-color: #494a21; }
+        .payment-status-box { text-align: center; margin-bottom: 20px; padding: 10px; border-radius: 6px; font-weight: bold; }
+        .status-paid { background-color: var(--cor-confirmado); color: white; }
+        .status-pending { background-color: var(--cor-rejeitado); color: white; }
+        .status-awaiting { background-color: var(--cor-pendente); color: black; }
+        .notification-dot {
+            height: 10px;
+            width: 10px;
+            background-color: var(--cor-pendente);
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+        .awaiting-approval-details { font-size: 0.8em; color: var(--cor-texto-secundario); margin-top: 5px; }
+        .awaiting-approval-details strong { color: var(--cor-pendente); }
+        .alternative-payment-info { font-size: 0.85em; text-align: center; color: var(--cor-texto-secundario); margin-top: 20px; line-height: 1.5; }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+        }
     </style>
 </head>
 <body>
     <main class="container" id="main-container">
         <!-- O conteúdo da aplicação será renderizado aqui pelo JavaScript -->
         <div class="form-container" style="text-align: center;">
-            <div class="logo-container"><img src="https://i.imgur.com/tWfGLm6.png" alt="Logo Rei da Várzea" class="logo-img"></div>
+            <div class="logo-container"><img src="https://i.imgur.com/VQjRRHl.png" alt="Logo Rei da Várzea" class="logo-img"></div>
             <p>Carregando...</p>
         </div>
     </main>
@@ -118,10 +155,11 @@
         // =================================================================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, writeBatch, getDocs, deleteDoc, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, writeBatch, getDocs, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const firebaseConfig = {
+            // SUAS CREDENCIAIS DO FIREBASE AQUI
             apiKey: "AIzaSyDybx8XH8UeZvQQvQhnse9wcZLATft5tiA",
             authDomain: "rei-da-varzea.firebaseapp.com",
             projectId: "rei-da-varzea",
@@ -148,6 +186,7 @@
             confirmations: {},
             votes: {},
             goals: {},
+            payments: {},
             unsubscribe: () => {},
             selectedProfile: null,
             deferredPrompt: null,
@@ -185,7 +224,7 @@
         };
 
         // =================================================================================
-        //  MÓDULO DE TIME (Team)
+        //  MÓDULO DE TIME (Team) - ATUALIZADO
         // =================================================================================
         const Team = {
             handleDonoSubmit: async (e) => { 
@@ -197,7 +236,29 @@
                 const newTeamRef = await addDoc(collection(db, "teams"), newTeamData); 
                 await updateDoc(doc(db, "users", AppState.currentUser.uid), { teamId: newTeamRef.id }); 
             },
-            handleJogadorSubmit: async (e) => { e.preventDefault(); const code = document.getElementById('codigo-time').value.toUpperCase(); const q = query(collection(db, "teams"), where("code", "==", code)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { await updateDoc(doc(db, "users", AppState.currentUser.uid), { teamId: querySnapshot.docs[0].id }); } else { alert("Código de convite inválido!"); } },
+            handleJogadorSubmit: async (e) => { 
+                e.preventDefault(); 
+                const code = document.getElementById('codigo-time').value.toUpperCase(); 
+                const q = query(collection(db, "teams"), where("code", "==", code)); 
+                const querySnapshot = await getDocs(q); 
+                if (!querySnapshot.empty) { 
+                    // NOVO: Adiciona status de aprovação pendente
+                    await updateDoc(doc(db, "users", AppState.currentUser.uid), { 
+                        teamId: querySnapshot.docs[0].id,
+                        approved: false 
+                    }); 
+                } else { 
+                    alert("Código de convite inválido!"); 
+                } 
+            },
+            handleApprovePlayer: async (playerId) => {
+                try {
+                    await updateDoc(doc(db, "users", playerId), { approved: true });
+                } catch (error) {
+                    console.error("Erro ao aprovar jogador:", error);
+                    alert("Não foi possível aprovar o jogador.");
+                }
+            },
             handleUpdateTeam: async (e) => {
                 e.preventDefault();
                 const newTeamName = document.getElementById('edit-team-name').value;
@@ -228,7 +289,8 @@
             handleAgendarJogo: async (e) => { 
                 e.preventDefault(); 
                 const duration = document.getElementById('game-duration').value;
-                await addDoc(collection(db, "games"), { 
+                const gamesCollectionRef = collection(db, "teams", AppState.userData.teamId, "games");
+                await addDoc(gamesCollectionRef, { 
                     teamId: AppState.userData.teamId, 
                     opponent: document.getElementById('opponent').value, 
                     location: document.getElementById('location').value, 
@@ -242,31 +304,66 @@
             handleReagendarJogo: (gameData) => {
                 UI.render(UI.screenAgendarJogo, { oldGame: gameData });
             },
-            handleConfirmation: async (gameId, status) => { const confirmationRef = doc(db, `games/${gameId}/confirmations`, AppState.currentUser.uid); const docSnap = await getDoc(confirmationRef); if (docSnap.exists() && docSnap.data().status === status) { await deleteDoc(confirmationRef); } else { await setDoc(confirmationRef, { userId: AppState.currentUser.uid, status }); } },
+            handleConfirmation: async (gameId, status) => { 
+                const confirmationRef = doc(db, `teams/${AppState.userData.teamId}/games/${gameId}/confirmations`, AppState.currentUser.uid);
+                const docSnap = await getDoc(confirmationRef); 
+                if (docSnap.exists() && docSnap.data().status === status) { 
+                    await deleteDoc(confirmationRef); 
+                } else { 
+                    await setDoc(confirmationRef, { userId: AppState.currentUser.uid, status }); 
+                } 
+            },
             handleRegisterResults: (gameId) => { const game = AppState.games.find(g => g.id === gameId); UI.render(UI.screenRegisterResult, { game }); },
-            handleGameResultSubmit: async (e, game) => { e.preventDefault(); const winnerRadio = document.querySelector('input[name="winner"]:checked'); if (!winnerRadio) return alert("Por favor, selecione o resultado da partida."); const winner = winnerRadio.value; const scoreHome = parseInt(document.getElementById('score-home').value) || 0; const scoreAway = parseInt(document.getElementById('score-away').value) || 0; if ((winner === 'home' && scoreHome <= scoreAway) || (winner === 'away' && scoreHome >= scoreAway) || (winner === 'draw' && scoreHome !== scoreAway)) return alert('Resultado inconsistente com o placar!'); await updateDoc(doc(db, "games", game.id), { result: { winner, score: { home: scoreHome, away: scoreAway } } }); UI.render(UI.screenRegistrarGols, { game }); },
-            handleGoalSubmit: async (e, game) => { e.preventDefault(); const inputs = e.target.querySelectorAll('input[type="number"]'); let totalGoals = 0; const batch = writeBatch(db); inputs.forEach(input => { const quantity = parseInt(input.value) || 0; if (quantity > 0) { totalGoals += quantity; const goalRef = doc(db, `games/${game.id}/goals`, input.dataset.playerId); batch.set(goalRef, { playerId: input.dataset.playerId, quantity }); } }); if (game.result.score.home !== totalGoals) return alert(`O número de gols registados (${totalGoals}) não bate com o placar do seu time (${game.result.score.home})!`); await batch.commit(); await updateDoc(doc(db, "games", game.id), { resultsEntered: true, votingOpen: true }); UI.render(UI.screenVotacaoCraque, { game }); },
+            handleGameResultSubmit: async (e, game) => { 
+                e.preventDefault(); 
+                const winnerRadio = document.querySelector('input[name="winner"]:checked'); 
+                if (!winnerRadio) return alert("Por favor, selecione o resultado da partida."); 
+                const winner = winnerRadio.value; 
+                const scoreHome = parseInt(document.getElementById('score-home').value) || 0; 
+                const scoreAway = parseInt(document.getElementById('score-away').value) || 0; 
+                if ((winner === 'home' && scoreHome <= scoreAway) || (winner === 'away' && scoreHome >= scoreAway) || (winner === 'draw' && scoreHome !== scoreAway)) return alert('Resultado inconsistente com o placar!'); 
+                await updateDoc(doc(db, "teams", AppState.userData.teamId, "games", game.id), { result: { winner, score: { home: scoreHome, away: scoreAway } } });
+                UI.render(UI.screenRegistrarGols, { game }); 
+            },
+            handleGoalSubmit: async (e, game) => { 
+                e.preventDefault(); 
+                const inputs = e.target.querySelectorAll('input[type="number"]'); 
+                let totalGoals = 0; 
+                const batch = writeBatch(db); 
+                inputs.forEach(input => { 
+                    const quantity = parseInt(input.value) || 0; 
+                    if (quantity > 0) { 
+                        totalGoals += quantity; 
+                        const goalRef = doc(db, `teams/${AppState.userData.teamId}/games/${game.id}/goals`, input.dataset.playerId);
+                        batch.set(goalRef, { playerId: input.dataset.playerId, quantity }); 
+                    } 
+                }); 
+                if (game.result.score.home !== totalGoals) return alert(`O número de gols registados (${totalGoals}) não bate com o placar do seu time (${game.result.score.home})!`); 
+                await batch.commit(); 
+                await updateDoc(doc(db, "teams", AppState.userData.teamId, "games", game.id), { resultsEntered: true, votingOpen: true });
+                UI.render(UI.screenVotacaoCraque, { game }); 
+            },
             handleSkipGoals: (game) => { UI.render(UI.screenConfirmAction, { title: 'Pular Artilharia', message: 'Tem certeza que deseja pular o registro de gols e encerrar esta partida?', confirmAction: 'confirm-skip-goals', targetId: game.id }); },
-            confirmSkipGoals: async (gameId) => { await updateDoc(doc(db, "games", gameId), { resultsEntered: true, votingOpen: true }); const game = AppState.games.find(g => g.id === gameId); UI.render(UI.screenVotacaoCraque, { game }); },
-            
-            // **AJUSTADO** - Lógica para verificar e encerrar a votação
+            confirmSkipGoals: async (gameId) => { 
+                await updateDoc(doc(db, "teams", AppState.userData.teamId, "games", gameId), { resultsEntered: true, votingOpen: true });
+                const game = AppState.games.find(g => g.id === gameId); 
+                UI.render(UI.screenVotacaoCraque, { game }); 
+            },
             _checkVotingStatus: async (game) => {
                 const confirmations = AppState.confirmations[game.id] || [];
                 const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length;
-                
-                const votesSnapshot = await getDocs(collection(db, `games/${game.id}/votes`));
+                const votesSnapshot = await getDocs(collection(db, `teams/${AppState.userData.teamId}/games/${game.id}/votes`));
                 const currentVotesCount = votesSnapshot.size;
-
                 if (currentVotesCount >= eligibleVotersCount) {
-                    await updateDoc(doc(db, "games", game.id), { votingOpen: false });
+                    await updateDoc(doc(db, "teams", AppState.userData.teamId, "games", game.id), { votingOpen: false });
                 }
             },
             handleVoteSubmit: async (game, votedPlayerId) => { 
-                await setDoc(doc(db, `games/${game.id}/votes`, AppState.currentUser.uid), { voterId: AppState.currentUser.uid, votedPlayerId }); 
+                await setDoc(doc(db, `teams/${AppState.userData.teamId}/games/${game.id}/votes`, AppState.currentUser.uid), { voterId: AppState.currentUser.uid, votedPlayerId }); 
                 Game._checkVotingStatus(game);
             },
             handleSkipVote: async (game) => { 
-                await setDoc(doc(db, `games/${game.id}/votes`, AppState.currentUser.uid), { voterId: AppState.currentUser.uid, votedPlayerId: null }); 
+                await setDoc(doc(db, `teams/${AppState.userData.teamId}/games/${game.id}/votes`, AppState.currentUser.uid), { voterId: AppState.currentUser.uid, votedPlayerId: null }); 
                 Game._checkVotingStatus(game);
             },
         };
@@ -287,11 +384,60 @@
                     await updateDoc(doc(db, "teams", AppState.team.id), { financials: financialData });
                     alert('Configurações financeiras salvas com sucesso!');
                 } catch (error) { console.error("Erro ao salvar configurações financeiras:", error); alert("Não foi possível salvar as configurações. Tente novamente."); }
+            },
+
+            handleSubmitTransactionId: async (e) => {
+                e.preventDefault();
+                const transactionId = document.getElementById('transaction-id').value.trim();
+                if (!transactionId) {
+                    return alert("Por favor, insira o ID da Transação PIX.");
+                }
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Enviando...';
+
+                const data = {
+                    status: 'awaiting_approval',
+                    transactionId: transactionId,
+                    updatedAt: serverTimestamp()
+                };
+
+                const now = new Date();
+                const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const paymentRef = doc(db, `teams/${AppState.team.id}/payments/${monthId}/players`, AppState.currentUser.uid);
+                
+                try {
+                    await setDoc(paymentRef, data, { merge: true });
+                } catch (error) {
+                    console.error("Erro ao enviar ID da transação:", error);
+                    alert("Não foi possível enviar a confirmação. Tente novamente.");
+                    btn.disabled = false;
+                    btn.textContent = 'Confirmar Pagamento com ID';
+                }
+            },
+            
+            handleManualPaymentToggle: async (playerId, newStatus) => {
+                const dataToUpdate = {
+                    status: newStatus,
+                    updatedAt: serverTimestamp()
+                };
+                if (newStatus === 'pending') {
+                    dataToUpdate.transactionId = deleteField();
+                }
+                const now = new Date();
+                const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const paymentRef = doc(db, `teams/${AppState.team.id}/payments/${monthId}/players`, playerId);
+                try {
+                    await setDoc(paymentRef, dataToUpdate, { merge: true });
+                } catch (error) {
+                    console.error("Erro ao atualizar pagamento:", error);
+                }
             }
         };
 
+
         // =================================================================================
-        //  MÓDULO DE UI (TELAS E RENDERIZAÇÃO)
+        //  MÓDULO DE UI (TELAS E RENDERIZAÇÃO) - ATUALIZADO
         // =================================================================================
         const UI = {
             render: (screen, data = {}) => {
@@ -306,13 +452,13 @@
                 remove: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="remove-player-icon" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>`,
                 info: `<svg class="help-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.064.293.006.399.287.47l.45.082.082-.38-.29-.071c-.293-.07-.352-.176-.288-.469l.738-3.468c.064-.293-.006-.399-.287-.47zM8 5.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>`
             },
-            logoHTML: `<div class="logo-container"><img src="https://i.imgur.com/tWfGLm6.png" alt="Logo Rei da Várzea" class="logo-img"></div>`,
+            logoHTML: `<div class="logo-container"><img src="https://i.imgur.com/VQjRRHl.png" alt="Logo Rei da Várzea" class="logo-img"></div>`,
             googleButtonHTML: `<div class="login-link" style="margin-bottom: 20px; font-size: 0.9em; color: var(--cor-texto-secundario);">ou</div><button type="button" id="google-signin-btn" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 10px;"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;">Continuar com Google</button>`,
             
             screenLogin: () => `<div class="form-container">${UI.logoHTML}<h2>Login</h2><form id="login-form"><div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div><a href="#" id="forgot-password-btn" style="display: block; text-align: right; font-size: 0.8em; margin-top: -10px; margin-bottom: 20px;">Esqueci minha senha</a><button type="submit" class="btn btn-submit">Entrar</button></form>${UI.googleButtonHTML}<p class="login-link">Não tem conta? <a id="show-register-btn" href="#">Cadastre-se</a></p><button type="button" id="install-button" class="btn btn-install" style="display: ${AppState.deferredPrompt ? 'block' : 'none'};">Instalar Aplicativo</button></div>`,
             screenForgotPassword: () => `<div class="form-container">${UI.logoHTML}<h2>Recuperar Senha</h2><p style="text-align:center; color: var(--cor-texto-secundario); margin-bottom: 20px;">Digite seu e-mail para receber o link de recuperação.</p><form id="forgot-password-form"><div class="input-group"><label for="email-reset">E-mail</label><input type="email" id="email-reset" required></div><button type="submit" class="btn btn-submit">Enviar</button></form><p class="login-link"><a id="show-login-btn" href="#">Voltar para o Login</a></p></div>`,
-            screenCadastro: () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${UI.logoHTML}<h2>Crie sua Conta</h2><form id="cadastro-form"><div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div><div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div><div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div><div class="input-group"><label for="confirm-password">Confirme sua senha</label><input type="password" id="confirm-password" required></div><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><div class="terms-group"><input type="checkbox" id="terms-agree" required><label for="terms-agree">Eu li e aceito os <a href="#" id="show-terms-btn">Termos de Uso e Política de Privacidade</a></label></div><button type="submit" class="btn btn-submit" style="margin-top: 20px;">CRIAR CONTA</button></form>${UI.googleButtonHTML}<p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p></div>`;},
-            screenChooseProfile: () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${UI.logoHTML}<h2>Complete seu Cadastro</h2><p style="text-align: center; margin-bottom: 20px;">Bem-vindo(a), ${AppState.currentUser?.displayName || 'jogador(a)'}! Falta só mais um passo.</p><form id="profile-selection-form"><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Qual seu perfil no time?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Dono</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">Salvar e Continuar</button></form></div>`; },
+            screenCadastro: () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${UI.logoHTML}<h2>Crie sua Conta</h2><form id="cadastro-form"><div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div><div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div><div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div><div class="input-group"><label for="confirm-password">Confirme sua senha</label><input type="password" id="confirm-password" required></div><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Admin</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><div class="terms-group"><input type="checkbox" id="terms-agree" required><label for="terms-agree">Eu li e aceito os <a href="#" id="show-terms-btn">Termos de Uso e Política de Privacidade</a></label></div><button type="submit" class="btn btn-submit" style="margin-top: 20px;">CRIAR CONTA</button></form>${UI.googleButtonHTML}<p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p></div>`;},
+            screenChooseProfile: () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${UI.logoHTML}<h2>Complete seu Cadastro</h2><p style="text-align: center; margin-bottom: 20px;">Bem-vindo(a), ${AppState.currentUser?.displayName || 'jogador(a)'}! Falta só mais um passo.</p><form id="profile-selection-form"><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Qual seu perfil no time?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Admin</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">Salvar e Continuar</button></form></div>`; },
             screenDonoCreateTeam: () => `<div class="form-container">${UI.logoHTML}<h2>Crie seu time</h2><form id="dono-form"><div class="input-group"><label for="nome-time">Nome do seu time</label><input type="text" id="nome-time" required></div><button type="submit" class="btn btn-submit">Criar e Avançar</button></form></div>`,
             screenJogadorJoinTeam: () => `<div class="form-container">${UI.logoHTML}<h2>Entre para um Time</h2><form id="jogador-form"><div class="input-group"><label for="codigo-time">Código de Convite</label><input type="text" id="codigo-time" required></div><button type="submit" class="btn btn-submit">Entrar no Time</button></form></div>`,
             screenAgendarJogo: (data = {}) => {
@@ -352,7 +498,17 @@
                 const nextGame = upcomingGames.length > 0 ? upcomingGames[0] : null;
                 const hasPendingGame = !!nextGame;
                 const agendarBtn = teamPlayers.length >= 2 && !hasPendingGame ? `<button id="agendar-jogo-btn" class="btn btn-submit">+ Agendar Novo Jogo</button>` : `<button class="btn btn-submit" disabled>+ Agendar Novo Jogo</button>`; 
-                const financasBtn = AppState.team.subscription?.level === 'varzea' ? `<button id="gestao-financeira-btn" class="btn btn-secondary" style="background-color: var(--cor-azul); color: white;">Gestão Financeira</button>` : '';
+                
+                const now = new Date();
+                const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const monthlyPayments = AppState.payments[monthId] || {};
+                const hasPendingPayments = Object.values(monthlyPayments).some(p => p.status === 'awaiting_approval');
+                const paymentNotificationDot = hasPendingPayments ? '<span class="notification-dot"></span>' : '';
+
+                const hasPendingPlayers = AppState.players.some(p => p.approved === false);
+                const playerNotificationDot = hasPendingPlayers ? '<span class="notification-dot"></span>' : '';
+
+                const financasBtn = AppState.team.subscription?.level === 'varzea' ? `<button id="gestao-financeira-btn" class="btn btn-secondary" style="background-color: var(--cor-azul); color: white; position: relative;">Gestão Financeira ${paymentNotificationDot}</button>` : '';
                 const devUpgradeBtn = (!AppState.team.subscription || AppState.team.subscription.level === 'free') ? `<button id="dev-upgrade-btn" class="btn" style="background: #444; color: #ccc; font-size: 0.8em; padding: 5px; margin-top: 15px;">DEV: Upgrade para Várzea</button>` : '';
                 let gameSectionHTML = '<p style="text-align:center; margin-top: 20px;">Nenhuma partida agendada.</p>';
                 if (nextGame) {
@@ -366,27 +522,44 @@
                     const confirmations = AppState.confirmations[game.id] || [];
                     const confirmed = confirmations.filter(c=>c.status === 'confirmed').map(c=>AppState.players.find(p=>p.id===c.userId)).filter(Boolean);
                     const rejected = confirmations.filter(c=>c.status === 'rejected').map(c=>AppState.players.find(p=>p.id===c.userId)).filter(Boolean);
-                    const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Dono'})`).join(', ') || 'Ninguém'}</p></div>`;
+                    const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Admin'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Admin'})`).join(', ') || 'Ninguém'}</p></div>`;
                     const gameActionsHTML = registerButtonHTML + attendanceHTML;
                     gameSectionHTML = `<div class="game-card" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p>${gameActionsHTML}</div>`;
                 }
                 const appUrl = 'https://www.reidavarzea.com.br';
                 const mensagemWhatsapp = encodeURIComponent(`E aí! Estou te convidando para o meu time no app Rei da Várzea.\n\nNosso código de acesso é: *${AppState.team.code}*\n\nBaixe o app e junte-se a nós: ${appUrl}`);
                 const whatsappLink = `https://api.whatsapp.com/send?text=${mensagemWhatsapp}`;
-                return `<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color:#333;margin:15px 0;">${agendarBtn}${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${AppState.team.code}</span><a href="${whatsappLink}" target="_blank" class="share-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg><span>Compartilhar</span></a></div><h2 class="section-title" style="margin-top:30px;">Próximo Jogo</h2>${gameSectionHTML}${devUpgradeBtn}</div>`;
+                return `<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color:#333;margin:15px 0;">${agendarBtn}${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary" style="position: relative;">Meu Time ${playerNotificationDot}</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${AppState.team.code}</span><a href="${whatsappLink}" target="_blank" class="share-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg><span>Compartilhar</span></a></div><h2 class="section-title" style="margin-top:30px;">Próximo Jogo</h2>${gameSectionHTML}${devUpgradeBtn}</div>`;
             },
             screenJogadorDashboard: () => { 
                 if (!AppState.team || !AppState.userData) return `<div class="form-container">${UI.logoHTML}<p>Carregando dados do time...</p></div>`; 
+                const financasBtn = AppState.team.subscription?.level === 'varzea' ? `<button id="financeiro-jogador-btn" class="btn btn-secondary">Financeiro</button>` : '';
                 let gamesHTML = AppState.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).map(game => { const confirmations = AppState.confirmations[game.id] || []; const myC = confirmations.find(c => c.userId === AppState.currentUser.uid); let cardClass = '', confirmBtnClass = '', rejectBtnClass = ''; if (myC) { cardClass = myC.status === 'confirmed' ? 'confirmed' : 'rejected'; rejectBtnClass = myC.status === 'confirmed' ? 'dimmed' : ''; confirmBtnClass = myC.status === 'rejected' ? 'dimmed' : ''; } return `<div class="game-card ${cardClass}" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>📍 ${game.location}</p><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${confirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${rejectBtnClass}">❌ TÔ FORA</button></div></div>`; }).join(''); 
                 let votePopupHTML = ''; 
                 const pendingVoteGame = AppState.games.find(g => { const confirmations = AppState.confirmations[g.id] || []; const votes = AppState.votes[g.id] || []; const myConfirmation = confirmations.find(c => c.userId === AppState.currentUser.uid); const myVote = votes.find(v => v.voterId === AppState.currentUser.uid); return g.votingOpen && myConfirmation?.status === 'confirmed' && !myVote; }); 
                 if (pendingVoteGame) { votePopupHTML = `<div class="popup-overlay"><div class="vote-card"><h4>Votação aberta!</h4><p>A votação para o Craque do Time do jogo contra <strong>${pendingVoteGame.opponent}</strong> está aberta!</p><button id="go-to-vote-btn" class="btn btn-submit" data-game-id="${pendingVoteGame.id}" style="margin-top: 20px;">Votar Agora!</button></div></div>`; } 
-                return `${votePopupHTML}<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color: #333; margin: 20px 0;"><button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Próximos Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;
+                return `${votePopupHTML}<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color: #333; margin: 20px 0;">${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Próximos Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;
             },
             screenElenco: () => { 
                 let membersHTML = AppState.players.map(member => {
-                    const removeIcon = AppState.userData.profile === 'dono' && member.id !== AppState.currentUser.uid ? `<a href="#" class="remove-player-link" data-player-id="${member.id}" data-player-name="${member.name}">${UI.icons.remove}</a>` : '';
-                    return `<li class="player-list-item"><div class="player-info"><span>${member.name}</span><span class="position">${member.position || '👑 Dono'}</span></div>${removeIcon}</li>`;
+                    const isApproved = member.approved !== false; // Trata usuários antigos (sem o campo) como aprovados
+                    let actionHTML = '';
+
+                    if (AppState.userData.profile === 'dono' && member.id !== AppState.currentUser.uid) {
+                        if (isApproved) {
+                            actionHTML = `<a href="#" class="remove-player-link" data-player-id="${member.id}" data-player-name="${member.name}">${UI.icons.remove}</a>`;
+                        } else {
+                            actionHTML = `<button class="btn btn-confirm approve-player-btn" data-player-id="${member.id}" style="font-size: 0.8em; padding: 6px 10px;">Aprovar</button>`;
+                        }
+                    }
+                    
+                    return `<li class="player-list-item ${!isApproved ? 'awaiting-approval' : ''}">
+                        <div class="player-info">
+                            <span>${member.name}</span>
+                            <span class="position">${!isApproved ? 'Aprovação Pendente' : (member.position || '👑 Admin')}</span>
+                        </div>
+                        ${actionHTML}
+                    </li>`;
                 }).join(''); 
                 return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Elenco: ${AppState.team.name}</h2><ul class="player-list">${membersHTML}</ul><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;
             },
@@ -396,7 +569,7 @@
             screenLogoHelp: () => `<div class="modal-overlay" id="logo-help-modal"><div class="help-modal-card"><h2>Como obter o link de um logo?</h2><ul style="text-align: left; margin: 20px 0;"><li>1. Encontre a imagem que deseja usar na internet (Google Imagens, etc.).</li><li>2. No computador, clique com o botão direito do mouse sobre a imagem.</li><li>3. No menu que aparecer, selecione a opção <strong>"Copiar endereço da imagem"</strong>.</li><li>4. Volte para o app e cole o link no campo "URL do Logo".</li></ul><button id="close-help-modal-btn" class="btn btn-submit">Entendi!</button></div></div>`,
             screenVotacaoCraque: ({ game }) => { const confirmations = AppState.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => AppState.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.filter(p => p.id !== AppState.currentUser.uid).map(p => `<li><button type="button" class="btn btn-profile player-vote-btn" data-player-id="${p.id}">${p.name}</button></li>`).join(''); return `<div class="modal-overlay"><div class="vote-card"><h4>Votação Aberta!</h4><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><p>Escolha o <strong>Craque do Time</strong>:</p><ul class="player-vote-list">${playersHTML}</ul><button id="confirm-vote-btn" class="btn btn-submit" data-game-id="${game.id}" disabled>Confirmar Voto</button><button id="skip-vote-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular Votação</button></div></div>`; },
             screenRegisterResult: ({ game }) => `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Resultado Final</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="result-form" data-game-id="${game.id}"><div class="winner-selection"><h3 class="section-title">Quem venceu?</h3><div class="input-group"><label><input type="radio" name="winner" value="home" required> Nosso time</label></div><div class="input-group"><label><input type="radio" name="winner" value="away"> O Adversário</label></div><div class="input-group"><label><input type="radio" name="winner" value="draw"> Empate</label></div></div><h3 class="section-title">Placar (Opcional)</h3><div class="score-input-container"><span>Nosso Time</span><input type="number" id="score-home" min="0" value="0"><span>X</span><input type="number" id="score-away" min="0" value="0"><span>Adversário</span></div><button type="submit" class="btn btn-submit">Salvar e ir para Artilharia</button></form></div>`,
-            screenRegistrarGols: ({ game }) => { const confirmations = AppState.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => AppState.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.map(p => `<div class="goal-registration-item"><label for="player-${p.id}">${p.name} (${p.position || '👑 Dono'})</label><input type="number" class="goal-input" data-player-id="${p.id}" min="0" value="0"></div>`).join(''); return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Artilharia da Partida</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="goal-form" data-game-id="${game.id}">${playersHTML}<button type="submit" class="btn btn-submit" style="margin-top:20px;">Salvar Artilharia</button></form><button id="skip-goals-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular e Encerrar</button></div>`;},
+            screenRegistrarGols: ({ game }) => { const confirmations = AppState.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => AppState.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.map(p => `<div class="goal-registration-item"><label for="player-${p.id}">${p.name} (${p.position || '👑 Admin'})</label><input type="number" class="goal-input" data-player-id="${p.id}" min="0" value="0"></div>`).join(''); return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Artilharia da Partida</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="goal-form" data-game-id="${game.id}">${playersHTML}<button type="submit" class="btn btn-submit" style="margin-top:20px;">Salvar Artilharia</button></form><button id="skip-goals-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular e Encerrar</button></div>`;},
             screenHistorico: () => {
                 let gamesHTML = AppState.games
                     .sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime))
@@ -437,6 +610,37 @@
             },
             screenFinanceiroDono: () => {
                 const financials = AppState.team.financials || {};
+                const players = AppState.players.filter(p => p.profile === 'jogador');
+                const now = new Date();
+                const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                
+                let playersHTML = players.map(player => {
+                    const payment = AppState.payments[monthId]?.[player.id];
+                    const status = payment?.status || 'pending';
+                    const isAwaiting = status === 'awaiting_approval';
+                    const isPaid = status === 'paid';
+
+                    const playerInfoHTML = `
+                        <div class="player-info">
+                            <span>${player.name}</span>
+                            ${isAwaiting
+                                ? `<div class="awaiting-approval-details">ID: <strong>${payment.transactionId || 'Não informado'}</strong></div>`
+                                : `<span class="position">${player.position || 'Jogador'}</span>`
+                            }
+                        </div>`;
+
+                    const actionHTML = `
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="payment-toggle" data-player-id="${player.id}" ${isPaid ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>`;
+
+                    return `<li class="player-list-item ${isAwaiting ? 'awaiting-approval' : ''}">
+                        ${playerInfoHTML}
+                        ${actionHTML}
+                    </li>`;
+                }).join('');
+
                 return `<div class="form-container">
                     ${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}
                     <h2>Gestão Financeira</h2>
@@ -449,12 +653,66 @@
                         <button type="submit" class="btn btn-submit">Salvar Configurações</button>
                     </form>
                     <hr style="border-color:#333;margin:30px 0;">
-                    <h3 class="section-title" style="font-weight: 700; color: var(--cor-amarelo);">Controle de Pagamentos</h3>
-                    <p style="text-align:center; color: var(--cor-texto-secundario);">Em breve: aqui você verá a lista de jogadores para marcar quem pagou.</p>
+                    <h3 class="section-title" style="font-weight: 700; color: var(--cor-amarelo);">Controle de Pagamentos - ${now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
+                    <ul class="player-list">${playersHTML || '<p>Nenhum jogador no elenco.</p>'}</ul>
                     <button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button>
                 </div>`;
             },
-            screenFinanceiroJogador: () => `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Pagamento da Mensalidade</h2><p>Aqui você verá os dados para pagamento e poderá enviar seu comprovante.</p><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`,
+            screenFinanceiroJogador: () => {
+                const financials = AppState.team.financials || {};
+                const now = new Date();
+                const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const myPayment = AppState.payments[monthId]?.[AppState.currentUser.uid];
+                const status = myPayment?.status || 'pending';
+                
+                let statusText = 'Pendente';
+                let statusClass = 'status-pending';
+                let actionAreaHTML = '';
+
+                if (status === 'paid') {
+                    statusText = 'Pago';
+                    statusClass = 'status-paid';
+                } else if (status === 'awaiting_approval') {
+                    statusText = 'Aguardando Aprovação';
+                    statusClass = 'status-awaiting';
+                }
+
+                if (status === 'pending') {
+                    actionAreaHTML = `
+                        <form id="payment-id-form">
+                            <div class="input-group">
+                                <label for="transaction-id">
+                                    ID da Transação PIX 
+                                    <span id="show-id-help-btn" title="Onde encontro isso?">${UI.icons.info}</span>
+                                </label>
+                                <input type="text" id="transaction-id" required>
+                            </div>
+                            <button type="submit" class="btn btn-submit">Confirmar Pagamento com ID</button>
+                        </form>
+                    `;
+                }
+
+                return `<div class="form-container" id="financeiro-jogador-view">
+                    ${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}
+                    <h2>Pagamento da Mensalidade</h2>
+                    <div class="payment-status-box ${statusClass}">Status: ${statusText}</div>
+                    <div class="payment-details-box">
+                        <p><strong>Valor:</strong> R$ ${financials.monthlyFee || 'Não definido'}</p>
+                        <p><strong>Chave PIX:</strong> ${financials.pixKey || 'Não definida'}</p>
+                        <p><strong>Nome:</strong> ${financials.recipientName || 'Não definido'}</p>
+                        <p><strong>Banco:</strong> ${financials.bankName || 'Não definido'}</p>
+                    </div>
+                    ${actionAreaHTML}
+                    <div class="alternative-payment-info">
+                        <hr style="border-color:#333;margin:20px 0;">
+                        <p>A função para anexar o comprovante estará disponível em breve!</p>
+                        <p>Por enquanto, se preferir, envie via <strong>WhatsApp</strong> para o admin.</p>
+                    </div>
+                    <button class="btn btn-secondary" disabled style="width:100%; margin-top: 20px; cursor: not-allowed;">Anexar Comprovante</button>
+                    <button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button>
+                </div>`;
+            },
+            screenIdHelp: () => `<div class="modal-overlay"><div class="help-modal-card"><h2>Onde encontrar o ID da Transação?</h2><p style="text-align: left; margin: 20px 0;">Após fazer um PIX, o aplicativo do seu banco mostra um comprovante. Nele, procure por um código chamado "ID da Transação", "ID da Operação" ou "Código de Autenticação".</p><p style="text-align: left; margin-bottom: 20px;">É um código longo de letras e números. Copie e cole esse código aqui para confirmar seu pagamento.</p><button id="close-modal-btn" class="btn btn-submit">Entendi!</button></div></div>`,
             screenTerms: () => `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Termos de Uso</h2><p style="font-size: 0.8em; text-align: left; max-height: 400px; overflow-y: auto;">Lorem ipsum dolor sit amet, consectetur adipiscing elit... [Texto completo dos termos e política de privacidade aqui]</p><button id="voltar-cadastro-btn" class="btn btn-secondary">Voltar</button></div>`,
             
             dashboardHeader: () => {
@@ -465,6 +723,7 @@
                 return `${UI.icons.logout}<div class="dashboard-header">${teamLogoPlaceholder}<div class="team-info"><div class="team-name-container"><h3 class="team-name">${AppState.team.name}</h3>${teamEditIcon}</div><div class="welcome-message"><span>Seja bem-vindo, ${userName}</span><a href="#" id="edit-user-btn" title="Editar meu perfil">${UI.icons.pencil}</a></div></div></div>`;
             },
             generateDashboardNotifications: () => {
+                let notificationsHTML = '';
                 let seenNotifications = [];
                 try {
                     seenNotifications = JSON.parse(localStorage.getItem('seenGameNotifications')) || [];
@@ -479,14 +738,12 @@
                 const sortedGames = finishedGames.sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime));
                 const latestGame = sortedGames[0];
 
-                let notificationsHTML = '';
                 const game = latestGame;
                 const votes = AppState.votes[game.id] || [];
                 const goals = AppState.goals[game.id] || [];
                 const confirmations = AppState.confirmations[game.id] || [];
                 const eligibleVotersCount = confirmations.filter(c => c.status === 'confirmed').length;
 
-                // MVP Notification Logic
                 const mvpNotificationId = `${game.id}-mvp`;
                 if (eligibleVotersCount > 0 && votes.length >= eligibleVotersCount && !seenNotifications.includes(mvpNotificationId)) {
                     const voteCounts = votes.filter(v => v.votedPlayerId).reduce((acc, vote) => { 
@@ -505,7 +762,6 @@
                     }
                 }
 
-                // Goals Notification Logic
                 const goalsNotificationId = `${game.id}-goals`;
                 if (!seenNotifications.includes(goalsNotificationId)) {
                     const myGoals = goals.find(g => g.playerId === AppState.currentUser.uid);
@@ -528,7 +784,7 @@
                     AppState.currentUser = user;
                     listenToUserData(user.uid);
                 } else {
-                    Object.assign(AppState, { currentUser: null, userData: null, team: null, players: [], games: [], confirmations: {}, votes: {}, goals: {}, unsubscribe: () => {} });
+                    Object.assign(AppState, { currentUser: null, userData: null, team: null, players: [], games: [], confirmations: {}, votes: {}, goals: {}, payments: {}, unsubscribe: () => {} });
                     UI.render(UI.screenLogin);
                 }
             });
@@ -560,16 +816,62 @@
 
             function listenToTeamData(teamId) {
                 const unsubscribers = [];
-                unsubscribers.push(onSnapshot(doc(db, "teams", teamId), docSnap => { AppState.team = docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null; if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); }));
-                unsubscribers.push(onSnapshot(query(collection(db, "users"), where("teamId", "==", teamId)), snapshot => { AppState.players = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); }));
-                unsubscribers.push(onSnapshot(query(collection(db, "games"), where("teamId", "==", teamId)), snapshot => { AppState.games = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); AppState.games.forEach(game => listenToGameSubcollections(game.id)); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); }));
+                const onError = (error, context) => {
+                    console.error(`Firebase permission error in snapshot listener for [${context}]. Check your Firestore security rules.`, error);
+                };
+
+                unsubscribers.push(onSnapshot(doc(db, "teams", teamId), (docSnap) => {
+                    AppState.team = docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+                    if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard);
+                }, (e) => onError(e, 'Team Document')));
+
+                unsubscribers.push(onSnapshot(query(collection(db, "users"), where("teamId", "==", teamId)), (snapshot) => {
+                    AppState.players = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard);
+                }, (e) => onError(e, 'Players Collection')));
+
+                const gamesCollectionRef = collection(db, "teams", teamId, "games");
+                unsubscribers.push(onSnapshot(query(gamesCollectionRef), (snapshot) => {
+                    AppState.games = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    AppState.games.forEach(game => listenToGameSubcollections(teamId, game.id));
+                    if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard);
+                }, (e) => onError(e, 'Games Collection')));
+
+                const now = new Date();
+                const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const paymentsCollectionRef = collection(db, `teams/${teamId}/payments/${monthId}/players`);
+
+                if (AppState.userData.profile === 'dono') {
+                    unsubscribers.push(onSnapshot(paymentsCollectionRef, (snapshot) => {
+                        AppState.payments[monthId] = {};
+                        snapshot.docs.forEach(doc => {
+                            AppState.payments[monthId][doc.id] = doc.data();
+                        });
+                        if (document.getElementById('financeiro-form')) UI.render(UI.screenFinanceiroDono);
+                        else if (document.querySelector('.dashboard-header')) UI.render(UI.screenDonoDashboard);
+                    }, (e) => onError(e, 'Payments Collection (Admin)')));
+                } else if (AppState.userData.profile === 'jogador') {
+                    const playerPaymentDocRef = doc(paymentsCollectionRef, AppState.currentUser.uid);
+                    unsubscribers.push(onSnapshot(playerPaymentDocRef, (docSnap) => {
+                        AppState.payments[monthId] = AppState.payments[monthId] || {};
+                        if (docSnap.exists()) {
+                            AppState.payments[monthId][docSnap.id] = docSnap.data();
+                        } else {
+                            delete AppState.payments[monthId][AppState.currentUser.uid];
+                        }
+                        if (document.getElementById('financeiro-jogador-view')) UI.render(UI.screenFinanceiroJogador);
+                        else if (document.querySelector('.dashboard-header')) UI.render(UI.screenJogadorDashboard);
+                    }, (e) => onError(e, 'Payment Document (Player)')));
+                }
+
                 AppState.unsubscribe = () => unsubscribers.forEach(unsub => unsub());
             }
 
-            function listenToGameSubcollections(gameId) {
-                onSnapshot(collection(db, `games/${gameId}/confirmations`), snap => { AppState.confirmations[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
-                onSnapshot(collection(db, `games/${gameId}/votes`), snap => { AppState.votes[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
-                onSnapshot(collection(db, `games/${gameId}/goals`), snap => { AppState.goals[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
+            function listenToGameSubcollections(teamId, gameId) {
+                const gamePath = `teams/${teamId}/games/${gameId}`;
+                onSnapshot(collection(db, `${gamePath}/confirmations`), snap => { AppState.confirmations[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
+                onSnapshot(collection(db, `${gamePath}/votes`), snap => { AppState.votes[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
+                onSnapshot(collection(db, `${gamePath}/goals`), snap => { AppState.goals[gameId] = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (AppState.userData?.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
             }
         }
         
@@ -622,6 +924,11 @@
             const cadastroForm = document.getElementById('cadastro-form'); if (cadastroForm) { const b = cadastroForm.querySelectorAll('.btn-profile'); const p = document.getElementById('position-field'); const s = p.querySelector('select'); b.forEach(B => { B.addEventListener('click', function() { b.forEach(n => n.classList.remove('selected')); this.classList.add('selected'); AppState.selectedProfile = this.dataset.profile; if(AppState.selectedProfile === 'jogador'){ p.style.display = 'block'; s.required = true; } else { p.style.display = 'none'; s.required = false; } }); }); }
             document.getElementById('dono-form')?.addEventListener('submit', Team.handleDonoSubmit);
             document.getElementById('jogador-form')?.addEventListener('submit', Team.handleJogadorSubmit);
+            document.querySelectorAll('.approve-player-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    Team.handleApprovePlayer(this.dataset.playerId);
+                });
+            });
             
             // Fluxo de Jogos
             document.getElementById('agendar-jogo-btn')?.addEventListener('click', () => UI.render(UI.screenAgendarJogo));
@@ -631,7 +938,6 @@
             const resultForm = document.getElementById('result-form'); if(resultForm) { resultForm.addEventListener('submit', (e) => Game.handleGameResultSubmit(e, AppState.games.find(g=>g.id === resultForm.dataset.gameId)));}
             const goalForm = document.getElementById('goal-form'); if(goalForm) { const game = AppState.games.find(g=>g.id === goalForm.dataset.gameId); goalForm.addEventListener('submit', (e) => Game.handleGoalSubmit(e, game)); document.getElementById('skip-goals-btn').addEventListener('click', () => Game.handleSkipGoals(game)); }
             
-            // Listener para o botão de reagendamento
             document.querySelectorAll('.reagendar-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const gameData = JSON.parse(this.dataset.gameJson);
@@ -643,15 +949,52 @@
             document.getElementById('ver-elenco-btn')?.addEventListener('click', () => UI.render(UI.screenElenco));
             document.getElementById('ver-historico-btn')?.addEventListener('click', () => UI.render(UI.screenHistorico));
             document.getElementById('voltar-dashboard-btn')?.addEventListener('click', () => { if (AppState.userData.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
-            
+            document.getElementById('go-to-financials-from-notification')?.addEventListener('click', () => UI.render(UI.screenFinanceiroDono));
+
             // Gestão Financeira
             document.getElementById('gestao-financeira-btn')?.addEventListener('click', () => UI.render(UI.screenFinanceiroDono));
+            document.getElementById('financeiro-jogador-btn')?.addEventListener('click', () => UI.render(UI.screenFinanceiroJogador));
             document.getElementById('dev-upgrade-btn')?.addEventListener('click', Team.handleDevUpgrade);
             document.getElementById('financeiro-form')?.addEventListener('submit', Financials.handleSaveFinancials);
+            document.getElementById('payment-id-form')?.addEventListener('submit', Financials.handleSubmitTransactionId);
+            document.getElementById('show-id-help-btn')?.addEventListener('click', () => {
+                const helpModal = document.createElement('div');
+                helpModal.innerHTML = UI.screenIdHelp();
+                document.body.appendChild(helpModal);
+                helpModal.querySelector('#close-modal-btn').addEventListener('click', () => {
+                    helpModal.remove();
+                });
+            });
+            document.querySelectorAll('.payment-toggle').forEach(toggle => {
+                toggle.addEventListener('change', function(e) {
+                    const playerId = this.dataset.playerId;
+                    const status = e.currentTarget.checked ? 'paid' : 'pending';
+                    Financials.handleManualPaymentToggle(playerId, status);
+                });
+            });
 
             // Votação
             const confirmVoteBtn = document.getElementById('confirm-vote-btn'); if(confirmVoteBtn) { let selectedPlayerId = null; document.querySelectorAll('.player-vote-btn').forEach(button => { button.addEventListener('click', function() { document.querySelectorAll('.player-vote-btn').forEach(btn => btn.classList.remove('selected')); this.classList.add('selected'); selectedPlayerId = this.dataset.playerId; confirmVoteBtn.disabled = false; }); }); const game = AppState.games.find(g=>g.id === confirmVoteBtn.dataset.gameId); if(game) { confirmVoteBtn.addEventListener('click', () => Game.handleVoteSubmit(game, selectedPlayerId)); document.getElementById('skip-vote-btn').addEventListener('click', () => Game.handleSkipVote(game)); } }
             document.getElementById('go-to-vote-btn')?.addEventListener('click', function() { const game = AppState.games.find(g => g.id === this.dataset.gameId); if (game) UI.render(UI.screenVotacaoCraque, { game }); });
+        
+            // Notificações
+            document.querySelectorAll('.notification-close-btn').forEach(btn => {
+                btn.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    const notificationDiv = this.closest('.dashboard-notification');
+                    const notificationId = notificationDiv.dataset.notificationId;
+                    if(notificationId) {
+                        try {
+                            let seen = JSON.parse(localStorage.getItem('seenGameNotifications')) || [];
+                            if(!seen.includes(notificationId)) {
+                                seen.push(notificationId);
+                                localStorage.setItem('seenGameNotifications', JSON.stringify(seen));
+                            }
+                        } catch(err) { console.error("Error with localStorage for notifications", err); }
+                    }
+                    notificationDiv.style.display = 'none';
+                });
+            });
         }
 
         // Inicia a aplicação
@@ -675,7 +1018,7 @@
                 if(installButton) installButton.style.display = 'none';
 
                 AppState.deferredPrompt.prompt();
-                const { outcome } = await AppState.deferredPrompt.userChoice;
+                const { outcome } = await AppState.thedPrompt.userChoice;
                 console.log(`User response to the install prompt: ${outcome}`);
                 AppState.deferredPrompt = null;
             }
@@ -683,4 +1026,5 @@
     </script>
 </body>
 </html>
+
 
