@@ -42,9 +42,9 @@
         .game-card { background-color: var(--cor-input-fundo); border-left: 5px solid var(--cor-amarelo); padding: 20px; border-radius: 6px; margin-bottom: 20px; }
         .game-card.confirmed { border-left-color: var(--cor-confirmado); }
         .game-card.rejected { border-left-color: var(--cor-rejeitado); }
-        .confirmation-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-confirm { background-color: var(--cor-confirmado); color: white; flex-grow: 1; }
-        .btn-reject { background-color: var(--cor-rejeitado); color: white; flex-grow: 1; }
+        .confirmation-buttons, .availability-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-confirm, .btn-available { background-color: var(--cor-confirmado); color: white; flex-grow: 1; }
+        .btn-reject, .btn-unavailable { background-color: var(--cor-rejeitado); color: white; flex-grow: 1; }
         .dimmed { opacity: 0.4; }
         .attendance-list { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--cor-input-borda); }
         .attendance-list h4 { color: var(--cor-amarelo); }
@@ -108,13 +108,18 @@
         .payment-details-box p { margin-bottom: 10px; }
         .payment-details-box strong { color: var(--cor-amarelo); }
 
-        /* Estilos para o Interruptor de Pagamento */
+        /* Estilos para o Interruptor de Pagamento e Disponibilidade */
         .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--cor-rejeitado); transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--cor-confirmado); }
         input:checked + .slider:before { transform: translateX(26px); }
+        
+        .availability-box, .recruitment-box { background-color: var(--cor-input-fundo); padding: 20px; text-align: center; border-radius: 8px; margin: 15px 0; }
+        .availability-box p { color: var(--cor-texto-secundario); font-size: 0.9em; margin-bottom: 15px; }
+        .recruitment-box .toggle-container { display: flex; justify-content: center; align-items: center; gap: 15px; }
+
         .player-list-item.awaiting-approval { background-color: #494a21; }
         .payment-status-box { text-align: center; margin-bottom: 20px; padding: 10px; border-radius: 6px; font-weight: bold; }
         .status-paid { background-color: var(--cor-confirmado); color: white; }
@@ -220,11 +225,29 @@
             handleForgotPassword: async (e) => { e.preventDefault(); const email = document.getElementById('email-reset').value; if (!email) { return alert("Por favor, digite seu e-mail."); } try { await sendPasswordResetEmail(auth, email); alert("Se houver uma conta com este e-mail, um link para redefinição de senha foi enviado. Verifique sua caixa de entrada e spam!"); UI.render(UI.screenLogin); } catch (error) { console.error("Erro ao enviar e-mail de recuperação:", error); alert("Ocorreu um erro. Verifique o e-mail digitado e tente novamente."); } },
             handleGoogleSignIn: async () => { const provider = new GoogleAuthProvider(); try { const result = await signInWithPopup(auth, provider); const user = result.user; const userDocRef = doc(db, "users", user.uid); const docSnap = await getDoc(userDocRef); if (!docSnap.exists()) { await setDoc(userDocRef, { name: user.displayName, email: user.email, profile: null, teamId: null, createdAt: serverTimestamp() }); } } catch (error) { console.error("Erro no login com Google: ", error); alert("Não foi possível fazer login com o Google. Tente novamente."); } },
             handleProfileSelection: async (e) => { e.preventDefault(); if (!AppState.selectedProfile) return alert("Por favor, selecione um perfil."); const dataToUpdate = { profile: AppState.selectedProfile, position: AppState.selectedProfile === 'jogador' ? document.getElementById('posicao').value : null, }; try { await updateDoc(doc(db, "users", AppState.currentUser.uid), dataToUpdate); } catch(error) { console.error("Erro ao salvar perfil: ", error); alert("Ocorreu um erro ao salvar seu perfil."); } },
-            handleUpdateUser: async (e) => { e.preventDefault(); const newName = document.getElementById('edit-nome').value; const newNickname = document.getElementById('edit-apelido').value; if (!newName) return alert('O nome não pode ficar em branco.'); try { await updateDoc(doc(db, "users", AppState.currentUser.uid), { name: newName, nickname: newNickname }); alert('Perfil atualizado com sucesso!'); if (AppState.userData.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); } catch (error) { console.error("Erro ao atualizar perfil:", error); alert('Não foi possível atualizar o perfil.'); } },
+            handleUpdateUser: async (e) => { 
+                e.preventDefault(); 
+                const newName = document.getElementById('edit-nome').value; 
+                const newNickname = document.getElementById('edit-apelido').value; 
+                if (!newName) return alert('O nome não pode ficar em branco.'); 
+                try { 
+                    await updateDoc(doc(db, "users", AppState.currentUser.uid), { 
+                        name: newName, 
+                        nickname: newNickname 
+                    }); 
+                    alert('Perfil atualizado com sucesso!'); 
+                    if (AppState.userData.profile === 'dono') UI.render(UI.screenDonoDashboard); 
+                    else if (AppState.userData.teamId) UI.render(UI.screenJogadorDashboard);
+                    else UI.render(UI.screenJogadorSemTimeDashboard);
+                } catch (error) { 
+                    console.error("Erro ao atualizar perfil:", error); 
+                    alert('Não foi possível atualizar o perfil.'); 
+                } 
+            },
         };
 
         // =================================================================================
-        //  MÓDULO DE TIME (Team) - ATUALIZADO
+        //  MÓDULO DE TIME (Team)
         // =================================================================================
         const Team = {
             handleDonoSubmit: async (e) => { 
@@ -242,7 +265,6 @@
                 const q = query(collection(db, "teams"), where("code", "==", code)); 
                 const querySnapshot = await getDocs(q); 
                 if (!querySnapshot.empty) { 
-                    // NOVO: Adiciona status de aprovação pendente
                     await updateDoc(doc(db, "users", AppState.currentUser.uid), { 
                         teamId: querySnapshot.docs[0].id,
                         approved: false 
@@ -273,12 +295,33 @@
             handleLeaveTeam: () => { UI.render(UI.screenConfirmAction, { title: 'Sair do Time', message: 'Você tem certeza que deseja sair do time? Esta ação não pode ser desfeita.', confirmAction: 'confirm-leave-team' }); },
             confirmLeaveTeam: async () => { try { if (typeof AppState.unsubscribe === 'function') { AppState.unsubscribe(); AppState.unsubscribe = () => {}; } await updateDoc(doc(db, "users", AppState.currentUser.uid), { teamId: null }); } catch (error) { console.error("Erro ao sair do time:", error); alert("Não foi possível sair do time. Tente novamente."); } },
             handleRemovePlayer: (playerId, playerName) => { UI.render(UI.screenConfirmAction, { title: 'Remover Jogador', message: `Você tem certeza que deseja remover ${playerName} do time?`, confirmAction: 'confirm-remove-player', targetId: playerId }); },
-            confirmRemovePlayer: async (playerId) => { try { await updateDoc(doc(db, "users", playerId), { teamId: null }); alert("Jogador removido com sucesso!"); UI.render(UI.screenElenco); } catch (error) { console.error("Erro ao remover jogador:", error); alert("Não foi possível remover o jogador. Tente novamente."); } },
+            confirmRemovePlayer: async (playerId) => { 
+                try { 
+                    await updateDoc(doc(db, "users", playerId), { 
+                        teamId: deleteField(),
+                        approved: deleteField()
+                    }); 
+                    alert("Jogador removido com sucesso!"); 
+                } catch (error) { 
+                    console.error("Erro ao remover jogador:", error); 
+                    alert("Não foi possível remover o jogador. Tente novamente."); 
+                } 
+            },
             handleDevUpgrade: async () => {
                 if (!AppState.team) return;
                 try {
                     await updateDoc(doc(db, "teams", AppState.team.id), { subscription: { level: "varzea", status: "active" } });
                 } catch (error) { console.error("Erro ao atualizar para plano Várzea:", error); alert("Não foi possível fazer o upgrade de teste."); }
+            },
+            handleRecruitmentChange: async (e) => {
+                const isRecruiting = e.target.checked;
+                const teamRef = doc(db, "teams", AppState.team.id);
+                try {
+                    await updateDoc(teamRef, { isRecruiting: isRecruiting });
+                } catch(error) {
+                    console.error("Erro ao mudar status de recrutamento:", error);
+                    alert("Não foi possível alterar o status de recrutamento.");
+                }
             }
         };
 
@@ -434,10 +477,44 @@
                 }
             }
         };
+        
+        // =================================================================================
+        //  MÓDULO DO JOGADOR (Player)
+        // =================================================================================
+        const Player = {
+            handleSaveAvailability: async (e) => {
+                e.preventDefault();
+                const locationString = document.getElementById('player-location').value.trim();
+                const userRef = doc(db, "users", AppState.currentUser.uid);
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+
+                try {
+                    if (locationString) {
+                        await updateDoc(userRef, {
+                            isAvailable: true,
+                            locationString: locationString
+                        });
+                        alert("Sua disponibilidade foi salva! Times agora podem te encontrar.");
+                    } else {
+                        await updateDoc(userRef, {
+                            isAvailable: false,
+                            locationString: deleteField()
+                        });
+                        alert("Você não está mais disponível para jogos.");
+                    }
+                } catch (error) {
+                    console.error("Erro ao salvar disponibilidade:", error);
+                    alert("Não foi possível salvar sua disponibilidade.");
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+        };
 
 
         // =================================================================================
-        //  MÓDULO DE UI (TELAS E RENDERIZAÇÃO) - ATUALIZADO
+        //  MÓDULO DE UI (TELAS E RENDERIZAÇÃO)
         // =================================================================================
         const UI = {
             render: (screen, data = {}) => {
@@ -460,7 +537,41 @@
             screenCadastro: () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${UI.logoHTML}<h2>Crie sua Conta</h2><form id="cadastro-form"><div class="input-group"><label for="nome">Seu nome</label><input type="text" id="nome" required></div><div class="input-group"><label for="apelido">Apelido (opcional)</label><input type="text" id="apelido"></div><div class="input-group"><label for="email">Seu e-mail</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Crie uma senha</label><input type="password" id="password" required></div><div class="input-group"><label for="confirm-password">Confirme sua senha</label><input type="password" id="confirm-password" required></div><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Seu perfil?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Admin</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><div class="terms-group"><input type="checkbox" id="terms-agree" required><label for="terms-agree">Eu li e aceito os <a href="#" id="show-terms-btn">Termos de Uso e Política de Privacidade</a></label></div><button type="submit" class="btn btn-submit" style="margin-top: 20px;">CRIAR CONTA</button></form>${UI.googleButtonHTML}<p class="login-link">Já tem conta? <a id="show-login-btn" href="#">Faça Login</a></p></div>`;},
             screenChooseProfile: () => { const posOptions = `<option value="">Selecione...</option><option value="Goleiro">Goleiro</option><option value="Zagueiro">Zagueiro</option><option value="Lateral">Lateral</option><option value="Meio-campista">Meio-campista</option><option value="Atacante">Atacante</option>`; return `<div class="form-container">${UI.logoHTML}<h2>Complete seu Cadastro</h2><p style="text-align: center; margin-bottom: 20px;">Bem-vindo(a), ${AppState.currentUser?.displayName || 'jogador(a)'}! Falta só mais um passo.</p><form id="profile-selection-form"><p class="profile-question" style="font-weight:700;margin:30px 0 15px 0;">Qual seu perfil no time?</p><div class="profile-selection"><button type="button" class="btn btn-profile" data-profile="dono">Sou Admin</button><button type="button" class="btn btn-profile" data-profile="jogador">Sou Jogador</button></div><div id="position-field" class="input-group" style="display:none;"><label for="posicao">Sua Posição</label><select id="posicao">${posOptions}</select></div><button type="submit" class="btn btn-submit">Salvar e Continuar</button></form></div>`; },
             screenDonoCreateTeam: () => `<div class="form-container">${UI.logoHTML}<h2>Crie seu time</h2><form id="dono-form"><div class="input-group"><label for="nome-time">Nome do seu time</label><input type="text" id="nome-time" required></div><button type="submit" class="btn btn-submit">Criar e Avançar</button></form></div>`,
-            screenJogadorJoinTeam: () => `<div class="form-container">${UI.logoHTML}<h2>Entre para um Time</h2><form id="jogador-form"><div class="input-group"><label for="codigo-time">Código de Convite</label><input type="text" id="codigo-time" required></div><button type="submit" class="btn btn-submit">Entrar no Time</button></form></div>`,
+            screenJogadorJoinTeam: () => `<div class="form-container">${UI.logoHTML}<h2>Entre para um Time</h2><form id="jogador-form"><div class="input-group"><label for="codigo-time">Código de Convite</label><input type="text" id="codigo-time" required></div><button type="submit" class="btn btn-submit">Entrar no Time</button></form><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`,
+            screenJogadorSemTimeDashboard: () => {
+                const locationString = AppState.userData?.locationString || '';
+                const userName = AppState.userData.name ? AppState.userData.name.split(' ')[0] : 'Rei da Várzea';
+                
+                return `<div class="form-container">
+                    ${UI.icons.logout}
+                    <div class="dashboard-header">
+                        <div class="team-info">
+                            <div class="welcome-message" style="justify-content: center;">
+                                <span>Seja bem-vindo, ${userName}</span>
+                                <a href="#" id="edit-user-btn" title="Editar meu perfil">${UI.icons.pencil}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <h2 class="section-title" style="margin-top: 20px;">Você ainda não está em um time.</h2>
+                    
+                    <button id="entrar-time-btn" class="btn btn-secondary" style="font-size: 1em; padding: 12px;">Entrar em um Time</button>
+
+                    <h3 class="section-title" style="margin: 30px 0 0 0; font-size: 1.1em; color: var(--cor-amarelo);">Jogar Avulso</h3>
+                    
+                    <div class="availability-box">
+                        <p>Para ficar disponível para jogos, preencha sua localização abaixo. Deixe em branco para ficar indisponível.</p>
+                        <form id="availability-form">
+                            <div class="input-group">
+                                <label for="player-location">Sua Cidade / Bairro para Jogos</label>
+                                <input type="text" id="player-location" value="${locationString}">
+                            </div>
+                            <button type="submit" class="btn btn-secondary" style="background-color: var(--cor-azul); color: white;">Salvar Disponibilidade</button>
+                        </form>
+                    </div>
+
+                    <button id="procurar-times-btn" class="btn btn-secondary" disabled>Procurar Times</button>
+                </div>`;
+            },
             screenAgendarJogo: (data = {}) => {
                 const today = new Date().toISOString().split('T')[0];
                 const oldGame = data.oldGame || {};
@@ -507,6 +618,8 @@
 
                 const hasPendingPlayers = AppState.players.some(p => p.approved === false);
                 const playerNotificationDot = hasPendingPlayers ? '<span class="notification-dot"></span>' : '';
+                
+                const isRecruiting = AppState.team.isRecruiting || false;
 
                 const financasBtn = AppState.team.subscription?.level === 'varzea' ? `<button id="gestao-financeira-btn" class="btn btn-secondary" style="background-color: var(--cor-azul); color: white; position: relative;">Gestão Financeira ${paymentNotificationDot}</button>` : '';
                 const devUpgradeBtn = (!AppState.team.subscription || AppState.team.subscription.level === 'free') ? `<button id="dev-upgrade-btn" class="btn" style="background: #444; color: #ccc; font-size: 0.8em; padding: 5px; margin-top: 15px;">DEV: Upgrade para Várzea</button>` : '';
@@ -529,7 +642,18 @@
                 const appUrl = 'https://www.reidavarzea.com.br';
                 const mensagemWhatsapp = encodeURIComponent(`E aí! Estou te convidando para o meu time no app Rei da Várzea.\n\nNosso código de acesso é: *${AppState.team.code}*\n\nBaixe o app e junte-se a nós: ${appUrl}`);
                 const whatsappLink = `https://api.whatsapp.com/send?text=${mensagemWhatsapp}`;
-                return `<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color:#333;margin:15px 0;">${agendarBtn}${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary" style="position: relative;">Meu Time ${playerNotificationDot}</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${AppState.team.code}</span><a href="${whatsappLink}" target="_blank" class="share-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg><span>Compartilhar</span></a></div><h2 class="section-title" style="margin-top:30px;">Próximo Jogo</h2>${gameSectionHTML}${devUpgradeBtn}</div>`;
+                return `<div class="form-container">${UI.dashboardHeader()}<hr style="border-color:#333;margin:15px 0;">${agendarBtn}${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary" style="position: relative;">Meu Time ${playerNotificationDot}</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button>
+                    <div class="recruitment-box">
+                        <div class="toggle-container">
+                            <label for="recruitment-toggle" style="font-weight: 700;">Procurando jogadores?</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="recruitment-toggle" ${isRecruiting ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <button id="buscar-jogadores-btn" class="btn btn-secondary" style="margin-top: 20px;" disabled>Buscar Jogadores Avulsos</button>
+                    </div>
+                    <h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${AppState.team.code}</span><a href="${whatsappLink}" target="_blank" class="share-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg><span>Compartilhar</span></a></div><h2 class="section-title" style="margin-top:30px;">Próximo Jogo</h2>${gameSectionHTML}${devUpgradeBtn}</div>`;
             },
             screenJogadorDashboard: () => { 
                 if (!AppState.team || !AppState.userData) return `<div class="form-container">${UI.logoHTML}<p>Carregando dados do time...</p></div>`; 
@@ -542,7 +666,7 @@
             },
             screenElenco: () => { 
                 let membersHTML = AppState.players.map(member => {
-                    const isApproved = member.approved !== false; // Trata usuários antigos (sem o campo) como aprovados
+                    const isApproved = member.approved !== false;
                     let actionHTML = '';
 
                     if (AppState.userData.profile === 'dono' && member.id !== AppState.currentUser.uid) {
@@ -563,8 +687,10 @@
                 }).join(''); 
                 return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Elenco: ${AppState.team.name}</h2><ul class="player-list">${membersHTML}</ul><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;
             },
-            screenEditTeam: () => `<div class="modal-overlay"><div class="edit-modal-card"><h2>Editar Time</h2><form id="edit-team-form"><div class="input-group"><label for="edit-team-name">Nome do Time</label><input type="text" id="edit-team-name" value="${AppState.team.name || ''}" required></div><div class="input-group"><label for="edit-team-logo">URL do Logo <span id="logo-help-btn" title="Como obter o URL de uma imagem?">${UI.icons.info}</span></label><input type="url" id="edit-team-logo" placeholder="Cole o link da imagem aqui" value="${AppState.team.logoUrl || ''}"></div><button type="submit" class="btn btn-submit">Salvar Alterações</button></form><button id="close-modal-btn" class="btn-skip-vote">Cancelar</button></div></div>`,
-            screenEditUser: () => `<div class="modal-overlay"><div class="edit-modal-card"><h2>Editar Perfil</h2><form id="edit-user-form"><div class="input-group"><label for="edit-nome">Seu nome</label><input type="text" id="edit-nome" value="${AppState.userData.name || ''}" required></div><div class="input-group"><label for="edit-apelido">Apelido</label><input type="text" id="edit-apelido" value="${AppState.userData.nickname || ''}"></div><button type="submit" class="btn btn-submit">Salvar Alterações</button></form><button id="leave-team-btn" class="btn btn-danger" style="width:100%; margin-top: 15px;">Sair do Time</button><button id="close-modal-btn" class="btn-skip-vote">Cancelar</button></div></div>`,
+            screenEditUser: () => {
+                const leaveTeamBtn = AppState.userData.teamId ? `<button id="leave-team-btn" class="btn btn-danger" style="width:100%; margin-top: 15px;">Sair do Time</button>` : '';
+                return `<div class="modal-overlay"><div class="edit-modal-card"><h2>Editar Perfil</h2><form id="edit-user-form"><div class="input-group"><label for="edit-nome">Seu nome</label><input type="text" id="edit-nome" value="${AppState.userData.name || ''}" required></div><div class="input-group"><label for="edit-apelido">Apelido</label><input type="text" id="edit-apelido" value="${AppState.userData.nickname || ''}"></div><button type="submit" class="btn btn-submit">Salvar Alterações</button></form>${leaveTeamBtn}<button id="close-modal-btn" class="btn-skip-vote">Cancelar</button></div></div>`;
+            },
             screenConfirmAction: ({ title, message, confirmAction, targetId }) => `<div class="modal-overlay"><div class="confirm-modal-card"><h2>${title}</h2><p style="margin: 20px 0; text-align: center;">${message}</p><div style="display: flex; gap: 10px;"><button id="cancel-action-btn" class="btn btn-secondary" style="flex-grow: 1;">Cancelar</button><button id="confirm-action-btn" class="btn btn-danger" style="flex-grow: 1;" data-action="${confirmAction}" data-target-id="${targetId || ''}">Sim, tenho certeza</button></div></div></div>`,
             screenLogoHelp: () => `<div class="modal-overlay" id="logo-help-modal"><div class="help-modal-card"><h2>Como obter o link de um logo?</h2><ul style="text-align: left; margin: 20px 0;"><li>1. Encontre a imagem que deseja usar na internet (Google Imagens, etc.).</li><li>2. No computador, clique com o botão direito do mouse sobre a imagem.</li><li>3. No menu que aparecer, selecione a opção <strong>"Copiar endereço da imagem"</strong>.</li><li>4. Volte para o app e cole o link no campo "URL do Logo".</li></ul><button id="close-help-modal-btn" class="btn btn-submit">Entendi!</button></div></div>`,
             screenVotacaoCraque: ({ game }) => { const confirmations = AppState.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => AppState.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.filter(p => p.id !== AppState.currentUser.uid).map(p => `<li><button type="button" class="btn btn-profile player-vote-btn" data-player-id="${p.id}">${p.name}</button></li>`).join(''); return `<div class="modal-overlay"><div class="vote-card"><h4>Votação Aberta!</h4><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><p>Escolha o <strong>Craque do Time</strong>:</p><ul class="player-vote-list">${playersHTML}</ul><button id="confirm-vote-btn" class="btn btn-submit" data-game-id="${game.id}" disabled>Confirmar Voto</button><button id="skip-vote-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular Votação</button></div></div>`; },
@@ -713,7 +839,31 @@
                 </div>`;
             },
             screenIdHelp: () => `<div class="modal-overlay"><div class="help-modal-card"><h2>Onde encontrar o ID da Transação?</h2><p style="text-align: left; margin: 20px 0;">Após fazer um PIX, o aplicativo do seu banco mostra um comprovante. Nele, procure por um código chamado "ID da Transação", "ID da Operação" ou "Código de Autenticação".</p><p style="text-align: left; margin-bottom: 20px;">É um código longo de letras e números. Copie e cole esse código aqui para confirmar seu pagamento.</p><button id="close-modal-btn" class="btn btn-submit">Entendi!</button></div></div>`,
-            screenTerms: () => `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Termos de Uso</h2><p style="font-size: 0.8em; text-align: left; max-height: 400px; overflow-y: auto;">Lorem ipsum dolor sit amet, consectetur adipiscing elit... [Texto completo dos termos e política de privacidade aqui]</p><button id="voltar-cadastro-btn" class="btn btn-secondary">Voltar</button></div>`,
+            screenTerms: () => `<div class="modal-overlay" id="terms-modal">
+                <div class="help-modal-card" style="border-top-color: var(--cor-amarelo);">
+                    <h2>Termos de Uso e Política de Privacidade</h2>
+                    <div style="font-size: 0.8em; text-align: left; max-height: 60vh; overflow-y: auto; margin: 20px 0; padding-right: 15px;">
+                        <p><strong>Última atualização:</strong> 28 de Julho de 2025</p>
+                        <p>Bem-vindo ao Rei da Várzea! Ao usar nosso aplicativo ("App"), você concorda com estes termos. Por favor, leia-os com atenção.</p>
+                        <h4 style="margin-top: 15px; color: var(--cor-amarelo);">1. Aceitação dos Termos</h4>
+                        <p>Ao criar uma conta, você concorda em cumprir estes Termos de Uso e nossa Política de Privacidade. Se não concordar, não use o App.</p>
+                        <h4 style="margin-top: 15px; color: var(--cor-amarelo);">2. Coleta e Uso de Dados (LGPD)</h4>
+                        <p>Estamos em conformidade com a Lei Geral de Proteção de Dados (LGPD). Coletamos os seguintes dados:</p>
+                        <ul>
+                            <li><strong>Dados de Cadastro:</strong> Nome, apelido (opcional), e-mail e senha.</li>
+                            <li><strong>Dados de Perfil:</strong> Seu perfil (Administrador ou Jogador) e sua posição em campo.</li>
+                            <li><strong>Dados de Localização (Manual):</strong> Se você, como jogador, preencher o campo de localização para se tornar disponível, armazenaremos essa informação como texto (ex: "São Paulo, SP").</li>
+                            <li><strong>Dados Financeiros (Admins):</strong> Chave PIX, nome do recebedor e banco para gestão de mensalidades.</li>
+                        </ul>
+                        <p><strong>Uso dos dados:</strong> Seus dados são usados para o funcionamento do App, para que membros do time se reconheçam e para a funcionalidade do "Mercado da Bola". Sua localização em texto é usada para que times possam te encontrar por região. Dados financeiros do admin são visíveis apenas para os membros do seu time.</p>
+                        <p><strong>Compartilhamento:</strong> Não vendemos seus dados. Seus dados de perfil são visíveis para seu time. Se você se tornar disponível, seu nome, posição e localização (texto) ficam visíveis para admins que procuram jogadores.</p>
+                        <p><strong>Seus Direitos:</strong> Você pode acessar, corrigir ou solicitar a exclusão de seus dados a qualquer momento através do seu perfil ou contatando-nos.</p>
+                        <h4 style="margin-top: 15px; color: var(--cor-amarelo);">3. Contato</h4>
+                        <p>Dúvidas? Entre em contato pelo e-mail: contato@reidavarzea.com.br</p>
+                    </div>
+                    <button id="close-terms-modal-btn" class="btn btn-submit">Entendi</button>
+                </div>
+            </div>`,
             
             dashboardHeader: () => {
                 if (!AppState.team || !AppState.userData) return '';
@@ -775,7 +925,7 @@
         };
 
         // =================================================================================
-        //  FUNÇÃO PRINCIPAL DE INICIALIZAÇÃO
+        //  FUNÇÃO PRINCIPAL DE INICIALIZAÇÃO E LISTENERS
         // =================================================================================
         function init() {
             onAuthStateChanged(auth, user => {
@@ -804,13 +954,17 @@
                 AppState.unsubscribe = onSnapshot(userDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         AppState.userData = { id: docSnap.id, ...docSnap.data() };
-                        if (!AppState.userData.profile) UI.render(UI.screenChooseProfile); 
-                        else if (AppState.userData.teamId) listenToTeamData(AppState.userData.teamId);
-                        else {
+                        if (!AppState.userData.profile) {
+                            UI.render(UI.screenChooseProfile); 
+                        } else if (AppState.userData.teamId) {
+                            listenToTeamData(AppState.userData.teamId);
+                        } else {
                             if (AppState.userData.profile === 'dono') UI.render(UI.screenDonoCreateTeam);
-                            else UI.render(UI.screenJogadorJoinTeam);
+                            else UI.render(UI.screenJogadorSemTimeDashboard);
                         }
-                    } else { UI.render(UI.screenChooseProfile); }
+                    } else { 
+                        UI.render(UI.screenChooseProfile); 
+                    }
                 });
             }
 
@@ -888,8 +1042,13 @@
             document.getElementById('google-signin-btn')?.addEventListener('click', Auth.handleGoogleSignIn);
             document.getElementById('logout-btn')?.addEventListener('click', Auth.handleLogout);
             document.getElementById('cadastro-form')?.addEventListener('submit', Auth.handleCadastroSubmit);
-            document.getElementById('show-terms-btn')?.addEventListener('click', (e) => { e.preventDefault(); UI.render(UI.screenTerms); });
-            document.getElementById('voltar-cadastro-btn')?.addEventListener('click', () => UI.render(UI.screenCadastro));
+            document.getElementById('show-terms-btn')?.addEventListener('click', (e) => { 
+                e.preventDefault(); 
+                const modal = document.createElement('div');
+                modal.innerHTML = UI.screenTerms();
+                document.body.appendChild(modal);
+                modal.querySelector('#close-terms-modal-btn').addEventListener('click', () => modal.remove());
+            });
 
             // Modais e Edição
             document.getElementById('edit-team-btn')?.addEventListener('click', (e) => { e.preventDefault(); UI.render(UI.screenEditTeam); });
@@ -948,8 +1107,15 @@
             // Navegação do Dashboard
             document.getElementById('ver-elenco-btn')?.addEventListener('click', () => UI.render(UI.screenElenco));
             document.getElementById('ver-historico-btn')?.addEventListener('click', () => UI.render(UI.screenHistorico));
-            document.getElementById('voltar-dashboard-btn')?.addEventListener('click', () => { if (AppState.userData.profile === 'dono') UI.render(UI.screenDonoDashboard); else UI.render(UI.screenJogadorDashboard); });
-            document.getElementById('go-to-financials-from-notification')?.addEventListener('click', () => UI.render(UI.screenFinanceiroDono));
+            document.getElementById('voltar-dashboard-btn')?.addEventListener('click', () => { 
+                if (AppState.userData.profile === 'dono') UI.render(UI.screenDonoDashboard); 
+                else if (AppState.userData.teamId) UI.render(UI.screenJogadorDashboard);
+                else UI.render(UI.screenJogadorSemTimeDashboard);
+            });
+            document.getElementById('entrar-time-btn')?.addEventListener('click', () => UI.render(UI.screenJogadorJoinTeam));
+            document.getElementById('availability-form')?.addEventListener('submit', Player.handleSaveAvailability);
+            document.getElementById('recruitment-toggle')?.addEventListener('change', Team.handleRecruitmentChange);
+
 
             // Gestão Financeira
             document.getElementById('gestao-financeira-btn')?.addEventListener('click', () => UI.render(UI.screenFinanceiroDono));
@@ -977,24 +1143,6 @@
             const confirmVoteBtn = document.getElementById('confirm-vote-btn'); if(confirmVoteBtn) { let selectedPlayerId = null; document.querySelectorAll('.player-vote-btn').forEach(button => { button.addEventListener('click', function() { document.querySelectorAll('.player-vote-btn').forEach(btn => btn.classList.remove('selected')); this.classList.add('selected'); selectedPlayerId = this.dataset.playerId; confirmVoteBtn.disabled = false; }); }); const game = AppState.games.find(g=>g.id === confirmVoteBtn.dataset.gameId); if(game) { confirmVoteBtn.addEventListener('click', () => Game.handleVoteSubmit(game, selectedPlayerId)); document.getElementById('skip-vote-btn').addEventListener('click', () => Game.handleSkipVote(game)); } }
             document.getElementById('go-to-vote-btn')?.addEventListener('click', function() { const game = AppState.games.find(g => g.id === this.dataset.gameId); if (game) UI.render(UI.screenVotacaoCraque, { game }); });
         
-            // Notificações
-            document.querySelectorAll('.notification-close-btn').forEach(btn => {
-                btn.addEventListener('click', function(e){
-                    e.stopPropagation();
-                    const notificationDiv = this.closest('.dashboard-notification');
-                    const notificationId = notificationDiv.dataset.notificationId;
-                    if(notificationId) {
-                        try {
-                            let seen = JSON.parse(localStorage.getItem('seenGameNotifications')) || [];
-                            if(!seen.includes(notificationId)) {
-                                seen.push(notificationId);
-                                localStorage.setItem('seenGameNotifications', JSON.stringify(seen));
-                            }
-                        } catch(err) { console.error("Error with localStorage for notifications", err); }
-                    }
-                    notificationDiv.style.display = 'none';
-                });
-            });
         }
 
         // Inicia a aplicação
@@ -1026,5 +1174,3 @@
     </script>
 </body>
 </html>
-
-
