@@ -605,10 +605,10 @@
             screenDonoDashboard: () => { 
                 if (!AppState.team || !AppState.userData) return `<div class="form-container">${UI.logoHTML}<p>Carregando dados do time...</p></div>`; 
                 const teamPlayers = AppState.players.filter(p => p.profile === 'jogador'); 
-                const upcomingGames = AppState.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
-                const nextGame = upcomingGames.length > 0 ? upcomingGames[0] : null;
-                const hasPendingGame = !!nextGame;
-                const agendarBtn = teamPlayers.length >= 2 && !hasPendingGame ? `<button id="agendar-jogo-btn" class="btn btn-submit">+ Agendar Novo Jogo</button>` : `<button class="btn btn-submit" disabled>+ Agendar Novo Jogo</button>`; 
+                const hasUpcomingGame = AppState.games.some(g => !g.resultsEntered);
+                const agendarBtn = teamPlayers.length >= 2 && !hasUpcomingGame 
+                    ? `<button id="agendar-jogo-btn" class="btn btn-submit">+ Agendar Novo Jogo</button>` 
+                    : `<button class="btn btn-submit" disabled title="${hasUpcomingGame ? 'Já existe um jogo agendado' : 'É preciso ter no mínimo 2 jogadores no time'}">+ Agendar Novo Jogo</button>`; 
                 
                 const now = new Date();
                 const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -623,26 +623,14 @@
 
                 const financasBtn = AppState.team.subscription?.level === 'varzea' ? `<button id="gestao-financeira-btn" class="btn btn-secondary" style="background-color: var(--cor-azul); color: white; position: relative;">Gestão Financeira ${paymentNotificationDot}</button>` : '';
                 const devUpgradeBtn = (!AppState.team.subscription || AppState.team.subscription.level === 'free') ? `<button id="dev-upgrade-btn" class="btn" style="background: #444; color: #ccc; font-size: 0.8em; padding: 5px; margin-top: 15px;">DEV: Upgrade para Várzea</button>` : '';
-                let gameSectionHTML = '<p style="text-align:center; margin-top: 20px;">Nenhuma partida agendada.</p>';
-                if (nextGame) {
-                    const game = nextGame;
-                    const gameStart = new Date(game.dateTime);
-                    const gameEnd = new Date(gameStart.getTime() + (game.duration || 90) * 60000);
-                    const isGameFinished = new Date() > gameEnd;
-
-                    const registerButtonHTML = `<button class="btn btn-secondary register-results-btn" data-game-id="${game.id}" ${!isGameFinished ? 'disabled' : ''} title="${!isGameFinished ? 'Aguardando o término da partida' : 'Registrar resultado do jogo'}">🏁 Registrar Resultados</button>`;
-                    
-                    const confirmations = AppState.confirmations[game.id] || [];
-                    const confirmed = confirmations.filter(c=>c.status === 'confirmed').map(c=>AppState.players.find(p=>p.id===c.userId)).filter(Boolean);
-                    const rejected = confirmations.filter(c=>c.status === 'rejected').map(c=>AppState.players.find(p=>p.id===c.userId)).filter(Boolean);
-                    const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Admin'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Admin'})`).join(', ') || 'Ninguém'}</p></div>`;
-                    const gameActionsHTML = registerButtonHTML + attendanceHTML;
-                    gameSectionHTML = `<div class="game-card" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p>${gameActionsHTML}</div>`;
-                }
-                const appUrl = 'https://www.reidavarzea.com.br';
-                const mensagemWhatsapp = encodeURIComponent(`E aí! Estou te convidando para o meu time no app Rei da Várzea.\n\nNosso código de acesso é: *${AppState.team.code}*\n\nBaixe o app e junte-se a nós: ${appUrl}`);
-                const whatsappLink = `https://api.whatsapp.com/send?text=${mensagemWhatsapp}`;
-                return `<div class="form-container">${UI.dashboardHeader()}<hr style="border-color:#333;margin:15px 0;">${agendarBtn}${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary" style="position: relative;">Meu Time ${playerNotificationDot}</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button>
+                
+                return `<div class="form-container">
+                    ${UI.dashboardHeader()}
+                    <hr style="border-color:#333;margin:15px 0;">
+                    ${agendarBtn}
+                    ${financasBtn}
+                    <button id="ver-elenco-btn" class="btn btn-secondary" style="position: relative;">Meu Time ${playerNotificationDot}</button>
+                    <button id="ver-historico-btn" class="btn btn-secondary">Jogos</button>
                     <div class="recruitment-box">
                         <div class="toggle-container">
                             <label for="recruitment-toggle" style="font-weight: 700;">Procurando jogadores?</label>
@@ -653,16 +641,16 @@
                         </div>
                         <button id="buscar-jogadores-btn" class="btn btn-secondary" style="margin-top: 20px;" disabled>Buscar Jogadores Avulsos</button>
                     </div>
-                    <h2 class="section-title" style="margin-top:20px;">Monte sua equipe!</h2><div class="player-counter">Jogadores no elenco: ${teamPlayers.length}</div><div class="invite-box"><span class="invite-code">${AppState.team.code}</span><a href="${whatsappLink}" target="_blank" class="share-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg><span>Compartilhar</span></a></div><h2 class="section-title" style="margin-top:30px;">Próximo Jogo</h2>${gameSectionHTML}${devUpgradeBtn}</div>`;
+                    ${devUpgradeBtn}
+                </div>`;
             },
             screenJogadorDashboard: () => { 
                 if (!AppState.team || !AppState.userData) return `<div class="form-container">${UI.logoHTML}<p>Carregando dados do time...</p></div>`; 
                 const financasBtn = AppState.team.subscription?.level === 'varzea' ? `<button id="financeiro-jogador-btn" class="btn btn-secondary">Financeiro</button>` : '';
-                let gamesHTML = AppState.games.filter(g => !g.resultsEntered).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).map(game => { const confirmations = AppState.confirmations[game.id] || []; const myC = confirmations.find(c => c.userId === AppState.currentUser.uid); let cardClass = '', confirmBtnClass = '', rejectBtnClass = ''; if (myC) { cardClass = myC.status === 'confirmed' ? 'confirmed' : 'rejected'; rejectBtnClass = myC.status === 'confirmed' ? 'dimmed' : ''; confirmBtnClass = myC.status === 'rejected' ? 'dimmed' : ''; } return `<div class="game-card ${cardClass}" data-game-id="${game.id}"><h3>vs ${game.opponent}</h3><p>📍 ${game.location}</p><p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p><div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${confirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${rejectBtnClass}">❌ TÔ FORA</button></div></div>`; }).join(''); 
                 let votePopupHTML = ''; 
                 const pendingVoteGame = AppState.games.find(g => { const confirmations = AppState.confirmations[g.id] || []; const votes = AppState.votes[g.id] || []; const myConfirmation = confirmations.find(c => c.userId === AppState.currentUser.uid); const myVote = votes.find(v => v.voterId === AppState.currentUser.uid); return g.votingOpen && myConfirmation?.status === 'confirmed' && !myVote; }); 
                 if (pendingVoteGame) { votePopupHTML = `<div class="popup-overlay"><div class="vote-card"><h4>Votação aberta!</h4><p>A votação para o Craque do Time do jogo contra <strong>${pendingVoteGame.opponent}</strong> está aberta!</p><button id="go-to-vote-btn" class="btn btn-submit" data-game-id="${pendingVoteGame.id}" style="margin-top: 20px;">Votar Agora!</button></div></div>`; } 
-                return `${votePopupHTML}<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color: #333; margin: 20px 0;">${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Histórico de Jogos</button><h2 class="section-title" style="margin-top:20px;">Próximos Jogos</h2>${gamesHTML || '<p>Nenhum jogo agendado.</p>'}</div>`;
+                return `${votePopupHTML}<div class="form-container">${UI.dashboardHeader()}${UI.generateDashboardNotifications()}<hr style="border-color: #333; margin: 20px 0;">${financasBtn}<button id="ver-elenco-btn" class="btn btn-secondary">Meu Time</button><button id="ver-historico-btn" class="btn btn-secondary">Jogos</button></div>`;
             },
             screenElenco: () => { 
                 let membersHTML = AppState.players.map(member => {
@@ -685,7 +673,30 @@
                         ${actionHTML}
                     </li>`;
                 }).join(''); 
-                return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Elenco: ${AppState.team.name}</h2><ul class="player-list">${membersHTML}</ul><button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;
+
+                const teamPlayers = AppState.players.filter(p => p.profile === 'jogador');
+                const appUrl = 'https://www.reidavarzea.com.br';
+                const mensagemWhatsapp = encodeURIComponent(`E aí! Estou te convidando para o meu time no app Rei da Várzea.\n\nNosso código de acesso é: *${AppState.team.code}*\n\nBaixe o app e junte-se a nós: ${appUrl}`);
+                const whatsappLink = `https://api.whatsapp.com/send?text=${mensagemWhatsapp}`;
+
+                const inviteHTML = AppState.userData.profile === 'dono' ? `
+                    <h2 class="section-title" style="margin-top:30px;">Monte sua equipe!</h2>
+                    <div class="player-counter" style="text-align: center; margin-bottom: 15px; color: var(--cor-texto-secundario);">Jogadores no elenco: ${teamPlayers.length}</div>
+                    <div class="invite-box">
+                        <span class="invite-code">${AppState.team.code}</span>
+                        <a href="${whatsappLink}" target="_blank" class="share-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg>
+                            <span>Compartilhar</span>
+                        </a>
+                    </div>` : '';
+
+                return `<div class="form-container">
+                    ${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}
+                    <h2>Elenco: ${AppState.team.name}</h2>
+                    <ul class="player-list">${membersHTML}</ul>
+                    ${inviteHTML}
+                    <button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button>
+                </div>`;
             },
             screenEditUser: () => {
                 const leaveTeamBtn = AppState.userData.teamId ? `<button id="leave-team-btn" class="btn btn-danger" style="width:100%; margin-top: 15px;">Sair do Time</button>` : '';
@@ -697,9 +708,52 @@
             screenRegisterResult: ({ game }) => `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Resultado Final</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="result-form" data-game-id="${game.id}"><div class="winner-selection"><h3 class="section-title">Quem venceu?</h3><div class="input-group"><label><input type="radio" name="winner" value="home" required> Nosso time</label></div><div class="input-group"><label><input type="radio" name="winner" value="away"> O Adversário</label></div><div class="input-group"><label><input type="radio" name="winner" value="draw"> Empate</label></div></div><h3 class="section-title">Placar (Opcional)</h3><div class="score-input-container"><span>Nosso Time</span><input type="number" id="score-home" min="0" value="0"><span>X</span><input type="number" id="score-away" min="0" value="0"><span>Adversário</span></div><button type="submit" class="btn btn-submit">Salvar e ir para Artilharia</button></form></div>`,
             screenRegistrarGols: ({ game }) => { const confirmations = AppState.confirmations[game.id] || []; const confirmedPlayers = confirmations.filter(c => c.status === 'confirmed').map(c => AppState.players.find(p => p.id === c.userId)).filter(Boolean); let playersHTML = confirmedPlayers.map(p => `<div class="goal-registration-item"><label for="player-${p.id}">${p.name} (${p.position || '👑 Admin'})</label><input type="number" class="goal-input" data-player-id="${p.id}" min="0" value="0"></div>`).join(''); return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Artilharia da Partida</h2><h5>vs ${game.opponent}</h5><hr style="border-color:#333; margin: 15px 0;"><form id="goal-form" data-game-id="${game.id}">${playersHTML}<button type="submit" class="btn btn-submit" style="margin-top:20px;">Salvar Artilharia</button></form><button id="skip-goals-btn" class="btn-skip-vote" data-game-id="${game.id}">Pular e Encerrar</button></div>`;},
             screenHistorico: () => {
-                let gamesHTML = AppState.games
-                    .sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime))
+                // Seção de Próximos Jogos
+                const upcomingGames = AppState.games
+                    .filter(g => !g.resultsEntered)
+                    .sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+                let upcomingGamesHTML = upcomingGames.map(game => {
+                    let gameCardHTML = '';
+                    if (AppState.userData.profile === 'dono') {
+                        const gameStart = new Date(game.dateTime);
+                        const gameEnd = new Date(gameStart.getTime() + (game.duration || 90) * 60000);
+                        const isGameFinished = new Date() > gameEnd;
+                        const registerButtonHTML = `<button class="btn btn-secondary register-results-btn" data-game-id="${game.id}" ${!isGameFinished ? 'disabled' : ''} title="${!isGameFinished ? 'Aguardando o término da partida' : 'Registrar resultado do jogo'}">🏁 Registrar Resultados</button>`;
+                        
+                        const confirmations = AppState.confirmations[game.id] || [];
+                        const confirmed = confirmations.filter(c=>c.status === 'confirmed').map(c=>AppState.players.find(p=>p.id===c.userId)).filter(Boolean);
+                        const rejected = confirmations.filter(c=>c.status === 'rejected').map(c=>AppState.players.find(p=>p.id===c.userId)).filter(Boolean);
+                        const attendanceHTML = `<div class="attendance-list"><h4>Confirmados (${confirmed.length}):</h4><p>${confirmed.map(p => `${p.name} (${p.position || '👑 Admin'})`).join(', ') || 'Ninguém'}</p></div><div class="attendance-list"><h4>Ausentes (${rejected.length}):</h4><p>${rejected.map(p => `${p.name} (${p.position || '👑 Admin'})`).join(', ') || 'Ninguém'}</p></div>`;
+                        
+                        gameCardHTML = registerButtonHTML + attendanceHTML;
+                    } else { // Visualização do Jogador
+                        const confirmations = AppState.confirmations[game.id] || [];
+                        const myC = confirmations.find(c => c.userId === AppState.currentUser.uid);
+                        let cardClass = '', confirmBtnClass = '', rejectBtnClass = '';
+                        if (myC) {
+                            cardClass = myC.status === 'confirmed' ? 'confirmed' : 'rejected';
+                            rejectBtnClass = myC.status === 'confirmed' ? 'dimmed' : '';
+                            confirmBtnClass = myC.status === 'rejected' ? 'dimmed' : '';
+                        }
+                        gameCardHTML = `<div class="confirmation-buttons" data-game-id="${game.id}"><button class="btn btn-confirm ${confirmBtnClass}">✅ VOU</button><button class="btn btn-reject ${rejectBtnClass}">❌ TÔ FORA</button></div>`;
+                    }
+                    
+                    const myConfirmation = AppState.confirmations[game.id]?.find(c => c.userId === AppState.currentUser.uid);
+                    const cardClass = myConfirmation ? (myConfirmation.status === 'confirmed' ? 'confirmed' : 'rejected') : '';
+
+                    return `<div class="game-card ${cardClass}" data-game-id="${game.id}">
+                                <h3>vs ${game.opponent}</h3>
+                                <p>📍 ${game.location}</p>
+                                <p>🗓️ ${new Date(game.dateTime).toLocaleString('pt-BR')}</p>
+                                ${gameCardHTML}
+                            </div>`;
+                }).join('');
+
+                // Seção de Histórico de Jogos (Lógica existente)
+                let pastGamesHTML = AppState.games
                     .filter(g => g.resultsEntered)
+                    .sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime))
                     .map(game => {
                         const { result } = game;
                         const confirmations = AppState.confirmations[game.id] || [];
@@ -732,7 +786,21 @@
                             ${reagendarBtn}
                         </div>`;
                     }).join('');
-                return `<div class="form-container">${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}<h2>Histórico de Jogos</h2>${gamesHTML || '<p>Nenhum jogo no histórico.</p>'}<button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button></div>`;
+
+                return `<div class="form-container">
+                    ${UI.logoHTML.replace('class="logo-img"','class="logo-img" style="max-height: 80px;"')}
+                    <h2>Jogos do Time</h2>
+                    
+                    <h3 class="section-title" style="margin-top:20px; color: var(--cor-amarelo);">Próximos Jogos</h3>
+                    ${upcomingGamesHTML || '<p style="text-align:center;">Nenhum jogo agendado.</p>'}
+                    
+                    <hr style="border-color:#333;margin:30px 0;">
+
+                    <h3 class="section-title" style="margin-top:20px; color: var(--cor-amarelo);">Histórico de Jogos</h3>
+                    ${pastGamesHTML || '<p style="text-align:center;">Nenhum jogo no histórico.</p>'}
+                    
+                    <button id="voltar-dashboard-btn" class="btn btn-secondary">Voltar</button>
+                </div>`;
             },
             screenFinanceiroDono: () => {
                 const financials = AppState.team.financials || {};
